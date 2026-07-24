@@ -2,6 +2,7 @@ import BaseEmbedding from '@/lib/models/base/embedding';
 import BaseLLM from '@/lib/models/base/llm';
 import { searchSearxng, SearxngSearchOptions } from '@/lib/searxng';
 import { searchCrw } from '@/lib/crw';
+import { searchYoucom } from '@/lib/youcom';
 import { getSearchProvider } from '@/lib/config/serverRegistry';
 import SessionManager from '@/lib/session';
 import { Chunk, ResearchBlock, SearchResultsResearchBlock } from '@/lib/types';
@@ -13,12 +14,19 @@ import { splitText } from '@/lib/utils/splitText';
 
 /*
  * Dispatches a general web search to the configured provider. Defaults to
- * SearXNG; fastCRW (Firecrawl-compatible) is selectable via search config.
+ * SearXNG; fastCRW and You.com are selectable via search config.
  */
 const searchWeb = async (query: string, opts?: SearxngSearchOptions) => {
-  if (getSearchProvider() === 'crw') {
+  const provider = getSearchProvider();
+  
+  if (provider === 'crw') {
     return searchCrw(query);
   }
+  
+  if (provider === 'youcom') {
+    return searchYoucom(query, opts);
+  }
+  
   return searchSearxng(query, opts);
 };
 
@@ -173,7 +181,9 @@ export const executeSearch = async (input: {
       results,
       researchBlock,
     };
-  } else if (input.mode === 'quality') {
+  }
+
+  if (input.mode === 'quality') {
     const results: Chunk[] = [];
 
     const search = async (q: string) => {

@@ -21,6 +21,7 @@ class ConfigManager {
       searxngURL: '',
       crwURL: '',
       crwApiKey: '',
+      youcomApiKey: '',
     },
   };
   uiConfigSections: UIConfigSections = {
@@ -118,6 +119,10 @@ class ConfigManager {
             name: 'fastCRW',
             value: 'crw',
           },
+          {
+            name: 'You.com',
+            value: 'youcom',
+          },
         ],
         required: false,
         description: 'The backend used for general web search.',
@@ -159,6 +164,18 @@ class ConfigManager {
         default: '',
         scope: 'server',
         env: 'CRW_API_KEY',
+      },
+      {
+        name: 'You.com API Key',
+        key: 'youcomApiKey',
+        type: 'password',
+        required: false,
+        description:
+          'Your You.com API key (required when the search provider is set to You.com).',
+        placeholder: 'your-ydc-api-key',
+        default: '',
+        scope: 'server',
+        env: 'YDC_API_KEY',
       },
     ],
   };

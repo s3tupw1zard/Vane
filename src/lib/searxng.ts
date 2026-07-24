@@ -8,7 +8,7 @@ export interface SearxngSearchOptions {
   time_range?: string[];
 }
 
-interface SearxngSearchResult {
+export interface SearxngSearchResult {
   title: string;
   url: string;
   img_src?: string;
