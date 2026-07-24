@@ -19,7 +19,7 @@
 
 | Branch | Score | Description | Merge Conflicts | Resolution Status |
 |---|---|---|---|---|
-| pr/main-1107 (#18) | 8.5 | Add multi-user authentication and role-based access control - comprehensive auth system with RBAC, admin panel, session management | ✅ Resolved | Merged README manually, accepted integration's minor code fixes |
+| pr/main-1107 (#18) | 8.5 | Add multi-user authentication and role-based access control - comprehensive auth system with RBAC, admin panel, session management | ✅ Resolved | Merged PR's quality mode (AI picker + extractor) with integration's similarity fallback for external SearXNG instances |
 
 ## 🟡 Features & Enhancements
 
@@ -47,7 +47,7 @@ All 5 PRs have been successfully resolved and pushed to GitHub:
 1. **PR #3** (MiniMax) - ✅ Resolved 2026-07-24 - 1 file, 2/10 complexity
 2. **PR #13** (SearXNG fallback) - ✅ Resolved 2026-07-24 - 1 file, 4/10 complexity
 3. **PR #9** (OpenRouter fix) - ✅ Resolved 2026-07-24 - 1 file, 6/10 complexity
-4. **PR #18** (Multi-user auth) - ✅ Resolved 2026-07-24 - 4 files, 6/10 complexity
+4. **PR #18** (Multi-user auth) - ✅ Resolved 2026-07-24 - 1 file, 7/10 complexity
 5. **PR #4** (You.com) - ✅ Resolved 2026-07-24 - 3 files, 7/10 complexity
 
 See `VANE-FORK-RESOLVED-PRS.md` for detailed resolution notes.
@@ -55,4 +55,4 @@ See `VANE-FORK-RESOLVED-PRS.md` for detailed resolution notes.
 ---
 
 *Last updated: 2026-07-24*
-*All conflicts resolved - ready for GitHub merge*
+*All 5 conflicts resolved - ready for GitHub merge*
