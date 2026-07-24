@@ -14,10 +14,17 @@ export const getConfiguredModelProviderById = (
 export const getSearxngURL = () =>
   configManager.getConfig('search.searxngURL', '');
 
-export const getSearchProvider = (): 'searxng' | 'youcom' => {
-  const provider = configManager.getConfig('search.provider', 'searxng');
-  return provider === 'youcom' ? 'youcom' : 'searxng';
+export const getSearchProvider = (): 'searxng' | 'crw' | 'youcom' => {
+  const provider = configManager.getConfig('search.searchProvider', 'searxng');
+  if (provider === 'crw') return 'crw';
+  if (provider === 'youcom') return 'youcom';
+  return 'searxng';
 };
+
+export const getCrwURL = () =>
+  configManager.getConfig('search.crwURL', 'https://fastcrw.com/api');
+
+export const getCrwApiKey = () => configManager.getConfig('search.crwApiKey', '');
 
 export const getYoucomApiKey = (): string => {
   return (
