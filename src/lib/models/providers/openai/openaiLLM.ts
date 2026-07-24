@@ -18,75 +18,84 @@ import {
   ChatCompletionToolMessageParam,
 } from 'openai/resources/index.mjs';
 import { Message } from '@/lib/types';
-import { repairJson } from '@toolsycc/json-repair';
+import { extractJsonObject } from '@/lib/utils/extractJson';
 
 type OpenAIConfig = {
   apiKey: string;
   model: string;
-  baseURL?: string;
+  baseURL: string;
   options?: GenerateOptions;
 };
 
 class OpenAILLM extends BaseLLM<OpenAIConfig> {
-  openAIClient: OpenAI;
+  protected openAIClient: OpenAI;
 
   constructor(protected config: OpenAIConfig) {
     super(config);
 
     this.openAIClient = new OpenAI({
       apiKey: this.config.apiKey,
-      baseURL: this.config.baseURL || 'https://api.openai.com/v1',
+      baseURL: this.config.baseURL,
     });
   }
 
-  convertToOpenAIMessages(messages: Message[]): ChatCompletionMessageParam[] {
-    return messages.map((msg) => {
-      if (msg.role === 'tool') {
-        return {
+  private convertToOpenAIMessages(
+    messages: Message[],
+  ): ChatCompletionMessageParam[] {
+    const openaiMessages: ChatCompletionMessageParam[] = [];
+
+    for (const message of messages) {
+      if (message.role === 'tool') {
+        openaiMessages.push({
           role: 'tool',
-          tool_call_id: msg.id,
-          content: msg.content,
-        } as ChatCompletionToolMessageParam;
-      } else if (msg.role === 'assistant') {
-        return {
-          role: 'assistant',
-          content: msg.content,
-          ...(msg.tool_calls &&
-            msg.tool_calls.length > 0 && {
-              tool_calls: msg.tool_calls?.map((tc) => ({
-                id: tc.id,
-                type: 'function',
-                function: {
-                  name: tc.name,
-                  arguments: JSON.stringify(tc.arguments),
-                },
-              })),
-            }),
-        } as ChatCompletionAssistantMessageParam;
+          tool_call_id: message.id,
+          content: message.content,
+        });
+        continue;
       }
 
-      return msg;
-    });
+      if (message.role === 'assistant' && message.tool_calls?.length) {
+        const toolCalls = message.tool_calls.map((tc) => ({
+          id: tc.id,
+          type: 'function' as const,
+          function: {
+            name: tc.name,
+            arguments: JSON.stringify(tc.arguments),
+          },
+        }));
+
+        openaiMessages.push({
+          role: 'assistant',
+          tool_calls: toolCalls,
+          content: message.content || null,
+        });
+        continue;
+      }
+
+      openaiMessages.push({
+        role: message.role,
+        content: message.content,
+      });
+    }
+
+    return openaiMessages;
   }
 
   async generateText(input: GenerateTextInput): Promise<GenerateTextOutput> {
-    const openaiTools: ChatCompletionTool[] = [];
-
-    input.tools?.forEach((tool) => {
-      openaiTools.push({
-        type: 'function',
-        function: {
-          name: tool.name,
-          description: tool.description,
-          parameters: z.toJSONSchema(tool.schema),
-        },
-      });
-    });
-
     const response = await this.openAIClient.chat.completions.create({
       model: this.config.model,
-      tools: openaiTools.length > 0 ? openaiTools : undefined,
       messages: this.convertToOpenAIMessages(input.messages),
+      tools:
+        input.tools?.length > 0
+          ? input.tools.map((tool) => ({
+              type: 'function' as const,
+              function: {
+                name: tool.name,
+                description: tool.description,
+                parameters: z.toJSONSchema(tool.schema),
+              },
+            }))
+          : undefined,
       temperature:
         input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
       top_p: input.options?.topP ?? this.config.options?.topP,
@@ -101,44 +110,42 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
     });
 
     if (response.choices && response.choices.length > 0) {
+      const choice = response.choices[0];
+      const content = choice.message.content || '';
+      const toolCalls =
+        choice.message.tool_calls?.map((tc) => ({
+          id: tc.id,
+          name: tc.function.name,
+          arguments: JSON.parse(tc.function.arguments || '{}'),
+        })) || [];
+
       return {
-        content: response.choices[0].message.content!,
-        toolCalls:
-          response.choices[0].message.tool_calls
-            ?.map((tc) => {
-              if (tc.type === 'function') {
-                return {
-                  name: tc.function.name,
-                  id: tc.id,
-                  arguments: JSON.parse(tc.function.arguments),
-                };
-              }
-            })
-            .filter((tc) => tc !== undefined) || [],
+        content,
+        toolCalls,
         additionalInfo: {
-          finishReason: response.choices[0].finish_reason,
+          finishReason: choice.finish_reason,
         },
       };
     }
 
-    throw new Error('No response from OpenAI');
+    return {
+      content: '',
+      toolCalls: [],
+      additionalInfo: {},
+    };
   }
 
   async *streamText(
     input: GenerateTextInput,
   ): AsyncGenerator<StreamTextOutput> {
-    const openaiTools: ChatCompletionTool[] = [];
-
-    input.tools?.forEach((tool) => {
-      openaiTools.push({
-        type: 'function',
-        function: {
-          name: tool.name,
-          description: tool.description,
-          parameters: z.toJSONSchema(tool.schema),
-        },
-      });
-    });
+    const openaiTools: ChatCompletionTool[] = input.tools?.map((tool) => ({
+      type: 'function',
+      function: {
+        name: tool.name,
+        description: tool.description,
+        parameters: z.toJSONSchema(tool.schema),
+      },
+    })) as ChatCompletionTool[];
 
     const stream = await this.openAIClient.chat.completions.create({
       model: this.config.model,
@@ -199,6 +206,10 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
                 }
 
                 existingCall.arguments += tc.function?.arguments || '';
+                // Some providers (e.g. Anthropic's OpenAI-compatible endpoint)
+                // stream tool-call deltas where the accumulated arguments are
+                // still empty. partial-json's parse() throws " is empty" on an
+                // empty/whitespace string, so fall back to an empty object.
                 return {
                   ...existingCall,
                   arguments: parseToolArguments(existingCall.arguments),
@@ -215,7 +226,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
   }
 
   async generateObject<T>(input: GenerateObjectInput): Promise<T> {
-    const response = await this.openAIClient.chat.completions.parse({
+    const response = await this.openAIClient.chat.completions.create({
       messages: this.convertToOpenAIMessages(input.messages),
       model: this.config.model,
       temperature:
@@ -229,64 +240,67 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
         this.config.options?.frequencyPenalty,
       presence_penalty:
         input.options?.presencePenalty ?? this.config.options?.presencePenalty,
+      // Use the SDK's zodResponseFormat to build a strict, cleaned json_schema
+      // rather than passing z.toJSONSchema output directly — the Draft-7 markers
+      // it leaves in are the suspected trigger for the doubled-brace malformation
+      // vLLM's strict-json_schema guided decoder emits (confirmed by direct
+      // testing against vLLM 0.25 serving Qwen3.6 and GLM-5.2; llama-swap only
+      // forwards vLLM's bytes unchanged, so it is not the source). But send via
+      // .create() not .parse(): the SDK's built-in parse runs JSON.parse on the
+      // raw content and crashes on reasoning models that emit thinking markers
+      // before the JSON. We repair/extract JSON ourselves below.
       response_format: zodResponseFormat(input.schema, 'object'),
     });
 
     if (response.choices && response.choices.length > 0) {
+      const choice = response.choices[0];
+      // Preserve a genuine null/empty content as an explicit failure. The API
+      // returns content === null on refusals and on some failed/truncated
+      // completions; coercing that to '' would let extractJsonObject('') →
+      // '{}' flow through schema.parse and, when the schema permits {} (e.g.
+      // all-optional fields), return a valid empty object that masks the
+      // refusal. Fail loudly instead so the caller sees the real outcome.
+      const raw = choice.message.content;
+      if (raw == null || raw === '') {
+        throw new Error(
+          `Error parsing response from OpenAI: empty content\n` +
+            `finish_reason=${choice.finish_reason}\n` +
+            `usage=${JSON.stringify((response as { usage?: unknown }).usage)}`,
+        );
+      }
       try {
-        return input.schema.parse(
-          JSON.parse(
-            repairJson(response.choices[0].message.content!, {
-              extractJson: true,
-            }) as string,
-          ),
-        ) as T;
+        // extractJsonObject handles structural malformation (spurious braces
+        // from vLLM strict-json_schema decoders) and delegates token-level
+        // repair to jsonrepair, returning a parseable JSON string.
+        return input.schema.parse(JSON.parse(extractJsonObject(raw))) as T;
       } catch (err) {
-        throw new Error(`Error parsing response from OpenAI: ${err}`);
+        throw new Error(
+          `Error parsing response from OpenAI: ${err instanceof Error ? err.message : err}\n` +
+            `finish_reason=${choice.finish_reason}\n` +
+            `usage=${JSON.stringify((response as { usage?: unknown }).usage)}`,
+        );
       }
     }
 
-    throw new Error('No response from OpenAI');
+    throw new Error('Error parsing response from OpenAI: no choices');
   }
 
   async *streamObject<T>(input: GenerateObjectInput): AsyncGenerator<T> {
-    let recievedObj: string = '';
+    let receivedObject = '';
 
-    const stream = this.openAIClient.responses.stream({
-      model: this.config.model,
-      input: input.messages,
-      temperature:
-        input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
-      top_p: input.options?.topP ?? this.config.options?.topP,
-      max_completion_tokens:
-        input.options?.maxTokens ?? this.config.options?.maxTokens,
-      stop: input.options?.stopSequences ?? this.config.options?.stopSequences,
-      frequency_penalty:
-        input.options?.frequencyPenalty ??
-        this.config.options?.frequencyPenalty,
-      presence_penalty:
-        input.options?.presencePenalty ?? this.config.options?.presencePenalty,
-      text: {
-        format: zodTextFormat(input.schema, 'object'),
+    for await (const chunk of this.streamText({
+      ...input,
+      options: {
+        ...input.options,
+        stopSequences: [],
       },
-    });
+    })) {
+      receivedObject += chunk.contentChunk;
 
-    for await (const chunk of stream) {
-      if (chunk.type === 'response.output_text.delta' && chunk.delta) {
-        recievedObj += chunk.delta;
-
-        try {
-          yield parse(recievedObj) as T;
-        } catch (err) {
-          console.log('Error parsing partial object from OpenAI:', err);
-          yield {} as T;
-        }
-      } else if (chunk.type === 'response.output_text.done' && chunk.text) {
-        try {
-          yield parse(chunk.text) as T;
-        } catch (err) {
-          throw new Error(`Error parsing response from OpenAI: ${err}`);
-        }
+      try {
+        yield input.schema.parse(JSON.parse(receivedObject)) as T;
+      } catch {
+        continue;
       }
     }
   }
