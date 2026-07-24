@@ -13,6 +13,9 @@ COPY public ./public
 COPY drizzle ./drizzle
 
 RUN mkdir -p /home/vane/data
+# Build-time ARG is not persisted in image layers — safe for CI/CD / docker build
+ARG JWT_SECRET=dummy-build-secret
+ENV JWT_SECRET=$JWT_SECRET
 RUN yarn build
 
 FROM node:24.5.0-slim
@@ -33,6 +36,9 @@ COPY --from=builder /home/vane/data ./data
 COPY drizzle ./drizzle
 
 RUN mkdir /home/vane/uploads
+
+RUN yarn add playwright
+RUN yarn playwright install --with-deps --only-shell chromium
 
 RUN useradd --shell /bin/bash --system \
     --home-dir "/usr/local/searxng" \
@@ -67,8 +73,15 @@ RUN sed -i 's/\r$//' ./entrypoint.sh || true
 
 RUN echo "searxng ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
+RUN useradd -m -u 1000 vane && \
+    chown -R vane:vane /home/vane && \
+    chown -R vane:vane /usr/local/searxng
+
+USER vane
+
 EXPOSE 3000 8080
 
 ENV SEARXNG_API_URL=http://localhost:8080
+ENV HOSTNAME=0.0.0.0
 
 CMD ["/home/vane/entrypoint.sh"]
