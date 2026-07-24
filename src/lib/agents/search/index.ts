@@ -15,9 +15,12 @@ class SearchAgent {
     try {
       await this._searchAsync(session, input);
     } catch (err) {
-      console.error('[SearchAgent] Fatal error in searchAsync:', err);
+      console.error('SearchAgent error:', err);
       session.emit('error', {
-        data: err instanceof Error ? err.message : 'An error occurred while processing your request.',
+        data:
+          err instanceof Error
+            ? err.message
+            : 'An unknown error occurred during search',
       });
     }
   }

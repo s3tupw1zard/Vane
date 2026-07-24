@@ -552,6 +552,10 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     const messageId = message.messageId;
 
     return async (data: any) => {
+      if (data.type === 'keepAlive') {
+        return;
+      }
+
       if (data.type === 'error') {
         toast.error(data.data);
         setLoading(false);
