@@ -1,7 +1,7 @@
 import path from 'node:path';
 import fs from 'fs';
 import { Config, ConfigModelProvider, UIConfigSections } from './types';
-import { hashObj } from '../serverUtils';
+import { hashObj } from '../utils/hash';
 import { getModelProvidersUIConfigSection } from '../models/providers';
 
 class ConfigManager {
@@ -17,7 +17,12 @@ class ConfigManager {
     personalization: {},
     modelProviders: [],
     search: {
+      searchProvider: '',
       searxngURL: '',
+      crwURL: '',
+      crwApiKey: '',
+      youcomApiKey: '',
+      tavilyAPIKey: '',
     },
   };
   uiConfigSections: UIConfigSections = {
@@ -103,6 +108,34 @@ class ConfigManager {
     modelProviders: [],
     search: [
       {
+        name: 'Search Provider',
+        key: 'searchProvider',
+        type: 'select',
+        options: [
+          {
+            name: 'SearXNG',
+            value: 'searxng',
+          },
+          {
+            name: 'fastCRW',
+            value: 'crw',
+          },
+          {
+            name: 'You.com',
+            value: 'youcom',
+          },
+          {
+            name: 'Tavily',
+            value: 'tavily',
+          },
+        ],
+        required: false,
+        description: 'The backend used for general web search.',
+        default: 'searxng',
+        scope: 'server',
+        env: 'SEARCH_PROVIDER',
+      },
+      {
         name: 'SearXNG URL',
         key: 'searxngURL',
         type: 'string',
@@ -112,6 +145,50 @@ class ConfigManager {
         default: '',
         scope: 'server',
         env: 'SEARXNG_API_URL',
+      },
+      {
+        name: 'fastCRW URL',
+        key: 'crwURL',
+        type: 'string',
+        required: false,
+        description: 'The URL of the fastCRW API',
+        placeholder: 'https://api.fastcrw.com',
+        default: '',
+        scope: 'server',
+        env: 'CRW_API_URL',
+      },
+      {
+        name: 'fastCRW API Key',
+        key: 'crwApiKey',
+        type: 'password',
+        required: false,
+        description: 'API key for fastCRW (required when search provider is fastCRW)',
+        placeholder: 'crw-...',
+        default: '',
+        scope: 'server',
+        env: 'CRW_API_KEY',
+      },
+      {
+        name: 'You.com API Key',
+        key: 'youcomApiKey',
+        type: 'password',
+        required: false,
+        description: 'API key for You.com search (required when search provider is You.com)',
+        placeholder: 'youcom-...',
+        default: '',
+        scope: 'server',
+        env: 'YOUCOM_API_KEY',
+      },
+      {
+        name: 'Tavily API Key',
+        key: 'tavilyAPIKey',
+        type: 'password',
+        required: false,
+        description: 'API key for Tavily search (required when search provider is Tavily)',
+        placeholder: 'tvly-...',
+        default: '',
+        scope: 'server',
+        env: 'TAVILY_API_KEY',
       },
     ],
   };

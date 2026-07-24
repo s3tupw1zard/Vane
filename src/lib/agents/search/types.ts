@@ -13,6 +13,8 @@ export type SearchAgentConfig = {
   embedding: BaseEmbedding<any>;
   mode: 'speed' | 'balanced' | 'quality';
   systemInstructions: string;
+  maxResultsPerQuery?: number;
+  maxTotalResults?: number;
 };
 
 export type SearchAgentInput = {
@@ -58,6 +60,7 @@ export type ClassifierOutput = {
     showWeatherWidget: boolean;
     showStockWidget: boolean;
     showCalculationWidget: boolean;
+    showCurrencyWidget: boolean;
   };
   standaloneFollowUp: string;
 };
@@ -66,6 +69,8 @@ export type AdditionalConfig = {
   llm: BaseLLM<any>;
   embedding: BaseEmbedding<any>;
   session: SessionManager;
+  maxResultsPerQuery?: number;
+  maxTotalResults?: number;
 };
 
 export type ResearcherInput = {
@@ -117,6 +122,7 @@ export interface ResearchAction<
     additionalConfig: AdditionalConfig & {
       researchBlockId: string;
       fileIds: string[];
+      mode: SearchAgentConfig['mode'];
     },
   ) => Promise<ActionOutput>;
 }
