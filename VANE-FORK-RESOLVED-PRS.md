@@ -58,11 +58,21 @@
 ## Post-Resolution Checklist
 
 - [x] All 5 PR branches pushed to GitHub
-- [ ] Verify PR mergeability on GitHub (gh pr view <NUMBER>)
-- [ ] Remove entries from VANE-FORK-SCORES.md for resolved PRs
-- [ ] Clean up worktrees (completed)
+- [x] Verify PR mergeability on GitHub (gh pr view <NUMBER>)
+- [x] Remove entries from VANE-FORK-SCORES.md for resolved/closed/merged PRs
+- [x] Clean up worktrees (completed)
 - [ ] Final merging to be done on GitHub
 
 ---
 
 *Last updated: 2026-07-24*
+
+**Removed closed/merged PRs (Batch 2):** #22, #23, #25, #27, #29, #30, #31, #32, #33, #35
+- #22, #23, #25, #32: Error handling fixes consolidated into merged PR #25
+- #27: Raw response in errors - closed
+- #29: Tavily migration - closed
+- #30: HTML cleanup - closed
+- #31, #33: Features already merged independently
+- #35: maxResultsPerQuery - closed
+
+
