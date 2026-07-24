@@ -1,4 +1,4 @@
-# Vane 🔍
+# Vane-MU 🔍
 
 [![GitHub Repo stars](https://img.shields.io/github/stars/ItzCrazyKns/Vane?style=social)](https://github.com/ItzCrazyKns/Vane/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/ItzCrazyKns/Vane?style=social)](https://github.com/ItzCrazyKns/Vane/network/members)
@@ -7,15 +7,18 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/ItzCrazyKns/Vane/blob/master/LICENSE)
 [![GitHub last commit](https://img.shields.io/github/last-commit/ItzCrazyKns/Vane?color=green)](https://github.com/ItzCrazyKns/Vane/commits/master)
 [![Discord](https://dcbadge.limes.pink/api/server/26aArMy8tT?style=flat)](https://discord.gg/26aArMy8tT)
-[![Chat with Repo](https://badge.forgithub.com/ItzCrazyKns/Perplexica?badge=chat)](https://uithub.com/ItzCrazyKns/Perplexica)
 
-Vane is a **privacy-focused AI answering engine** that runs entirely on your own hardware. It combines knowledge from the vast internet with support for **local LLMs** (Ollama) and cloud providers (OpenAI, Claude, Groq), delivering accurate answers with **cited sources** while keeping your searches completely private.
+**Vane-MU** is the multi-user fork of [Vane](https://github.com/ItzCrazyKns/Vane), a privacy-focused AI answering engine. Vane-MU extends Vane with built-in user authentication, role-based access control, and a dedicated admin panel — allowing you to run a private AI search platform for multiple users.
 
 ![preview](.assets/vane-screenshot.png)
 
-Want to know more about its architecture and how it works? You can read it [here](https://github.com/ItzCrazyKns/Vane/tree/master/docs/architecture/README.md).
+> 📖 **Architecture** — Want to know how Vane works under the hood? See the [Original Vane Architecture Docs](https://github.com/ItzCrazyKns/Vane/tree/master/docs/architecture/README.md).
 
 ## ✨ Features
+
+All the original Vane features, plus multi-user support:
+
+### Original Vane Features
 
 🤖 **Support for all major AI providers** - Use local LLMs through Ollama or connect to OpenAI, Anthropic Claude, Google Gemini, Groq, and more. Mix and match models based on your needs.
 
@@ -41,7 +44,163 @@ Want to know more about its architecture and how it works? You can read it [here
 
 🕒 **Search history** - Every search is saved locally so you can revisit your discoveries anytime. Your research is never lost.
 
-✨ **More coming soon** - We're actively developing new features based on community feedback. Join our Discord to help shape Vane's future!
+### Multi-User Features (Vane-MU)
+
+- **🔐 User Authentication** — Local username/password accounts. No third-party SSO required.
+- **👤 User Management** — Admins can create, reset passwords, and delete user accounts.
+- **🛡️ Role-Based Access Control** — Two roles: `admin` and `user`. Admin-only settings (Models, Search) are hidden from regular users.
+- **⚙️ Admin Panel** — A dedicated `/admin` dashboard for managing users and configuring system-wide settings.
+- **📊 Per-User History** — Search history is scoped to each user account.
+- **🚪 Logout Button** — Available in the sidebar for all users.
+
+## 🏗️ User Roles
+
+| Role | Access |
+|------|--------|
+| `admin` | Full access: Settings (Preferences, Personalization, Models, Search), Admin Panel, User Management |
+| `user` | Settings: Preferences and Personalization only. No access to Models, Search, or Admin Panel. |
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- npm or yarn
+- [SearXNG](https://github.com/searxng/searxng) instance (or use the bundled instance via Docker)
+- One or more AI provider API keys (OpenAI, Claude, Gemini, Groq, Ollama, etc.)
+
+### Option 1 — Docker (Recommended)
+
+**Using pre-built Vane-MU image:**
+
+```bash
+docker run -d -p 3000:3000 -v vane-mu-data:/home/vane/data --name vane-mu itzcrazykns1337/vane:latest
+```
+
+Open http://localhost:3000 and complete the first-time setup (this creates the initial admin account).
+
+**Build from source:**
+
+```bash
+# Clone the repository
+git clone https://github.com/s3tupw1zard/Vane.git
+cd Vane
+
+# Build with Docker
+docker build -t vane-mu .
+docker run -d -p 3000:3000 -v vane-mu-data:/home/vane/data --name vane-mu vane-mu
+```
+
+### Option 2 — Docker Compose
+
+```bash
+git clone https://github.com/s3tupw1zard/Vane.git
+cd Vane
+docker-compose up -d
+```
+
+### Option 3 — Local Development
+
+```bash
+git clone https://github.com/s3tupw1zard/Vane.git
+cd Vane
+npm install
+npm run dev
+```
+
+Then open http://localhost:3000 and complete the setup wizard to create your admin account.
+
+## 🔑 Default Admin Credentials (First Setup)
+
+On first run, the setup wizard prompts you to create an admin account. This is the only time an account can be created without authentication — after that, only admins can add users.
+
+## ⚙️ Admin Panel
+
+Access the admin panel by clicking the **gear icon → Admin Panel** in the sidebar (admin users only).
+
+### User Management
+
+- View all registered users (username, role, creation date)
+- Create new user accounts
+- Reset a user's password
+- Delete user accounts
+
+### System Settings
+
+- **Models** — Configure AI model providers and endpoints (admin only)
+- **Search** — Configure SearXNG and search behaviour (admin only)
+
+## 🌐 Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SEARXNG_API_URL` | `http://localhost:8080` | SearXNG instance URL |
+| `DATABASE_URL` | `file:./data/vane.db` | SQLite database path |
+| `SESSION_SECRET` | _(required)_ | Secret for signing session tokens |
+| `JWT_SECRET` | _(required in production)_ | Secret for JWT tokens. In production (`NODE_ENV=production`), the app refuses to start without this. |
+| `NEXT_PUBLIC_VERSION` | `1.12.2` | Version shown in Settings footer |
+| `XQUIK_API_KEY` | _(optional)_ | Xquik API key for X/Twitter search integration |
+
+## 🔒 Security Notes
+
+- Passwords are hashed with **bcryptjs**
+- Sessions are managed via **HTTP-only cookies** using **jose** (JWT)
+- Admin API routes are protected by server-side `requireAdmin` middleware
+- Users cannot access or configure AI model providers or search settings
+- **JWT_SECRET enforcement**: In production (`NODE_ENV=production`), the app **refuses to start** without a valid `JWT_SECRET` environment variable — there is no fallback. In development, a placeholder key is used with a console warning. To set in production:
+  ```bash
+  docker run -e JWT_SECRET=your-secret-here -e NODE_ENV=production ...
+  ```
+
+## 📁 Project Structure
+
+```
+src/
+├── app/
+│   ├── admin/              # Admin panel page
+│   └── api/
+│       ├── admin/          # Admin-only API routes (user management, settings)
+│       ├── auth/           # Authentication (login, logout, session)
+│       └── config/         # Public config API
+├── components/
+│   ├── admin/              # Admin panel UI components
+│   └── Settings/           # Settings dialog and sections
+├── lib/
+│   ├── hooks/useAuth.tsx   # Authentication context & hooks
+│   └── middleware/         # Auth middleware (requireAdmin, etc.)
+drizzle/                    # Database migrations
+```
+
+## 📝 User Management API
+
+Admin-only endpoints under `/api/admin/`:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/admin/users` | List all users |
+| `POST` | `/api/admin/users` | Create a new user |
+| `PUT` | `/api/admin/users/reset` | Reset a user's password |
+| `DELETE` | `/api/admin/users` | Delete a user |
+| `GET` | `/api/admin/settings` | Get admin-only settings |
+| `PUT` | `/api/admin/settings` | Update admin settings |
+
+## 🔄 Migrating from Single-User Vane
+
+Vane-MU uses a SQLite database (`data/vane.db`) managed by Drizzle ORM. On first launch, run migrations:
+
+```bash
+npm run db:migrate
+```
+
+Or let the Docker entrypoint handle it automatically.
+
+## 📄 License
+
+MIT — same as the original [Vane](https://github.com/ItzCrazyKns/Vane) project.
+
+## 🙏 Acknowledgements
+
+Vane-MU is built on the excellent work of the [Vane](https://github.com/ItzCrazyKns/Vane) project by ItzCrazyKns. This fork adds multi-user functionality while preserving the privacy-first, self-hosted philosophy of the original.
 
 ## Sponsors
 
@@ -145,23 +304,6 @@ If you prefer to build from source or need more control:
 
 **Note**: After the containers are built, you can start Vane directly from Docker without having to open a terminal.
 
-### Kubernetes (Helm)
-
-A Helm chart is available in [`charts/vane`](charts/vane) to deploy Vane on Kubernetes. It supports both official images through a single `variant` switch:
-
-- `variant=full` (default) deploys `itzcrazykns1337/vane:latest` with the bundled SearxNG - no extra setup required.
-- `variant=slim` deploys `itzcrazykns1337/vane:slim-latest` and either deploys a SearxNG instance for you (`searxng.deploy=true`) or points at an existing one (`searxng.url`).
-
-```bash
-# Full image (Vane + bundled SearxNG)
-helm install vane ./charts/vane
-
-# Slim image with a chart-managed SearxNG
-helm install vane ./charts/vane --set variant=slim --set searxng.deploy=true
-```
-
-See the [chart README](charts/vane/README.md) for the full list of options (persistence, ingress, providers, etc.).
-
 ### Non-Docker Installation
 
 1. Install SearXNG and allow `JSON` format in the SearXNG settings. Make sure Wolfram Alpha search engine is also enabled.
@@ -196,7 +338,7 @@ See the [chart README](charts/vane/README.md) for the full list of options (pers
 
 See the [installation documentation](https://github.com/ItzCrazyKns/Vane/tree/master/docs/installation) for more information like updating, etc.
 
-### Troubleshooting
+## Troubleshooting
 
 #### Local OpenAI-API-Compliant Servers
 
@@ -212,6 +354,7 @@ If you're encountering an Ollama connection error, it is likely due to the backe
 
 1. **Check your Ollama API URL:** Ensure that the API URL is correctly set in the settings menu.
 2. **Update API URL Based on OS:**
+
    - **Windows:** Use `http://host.docker.internal:11434`
    - **Mac:** Use `http://host.docker.internal:11434`
    - **Linux:** Use `http://<private_ip_of_host>:11434`
@@ -219,9 +362,10 @@ If you're encountering an Ollama connection error, it is likely due to the backe
    Adjust the port number if you're using a different one.
 
 3. **Linux Users - Expose Ollama to Network:**
-   - Inside `/etc/systemd/system/ollama.service`, you need to add `Environment="OLLAMA_HOST=0.0.0.0:11434"`. (Change the port number if you are using a different one.) Then reload the systemd manager configuration with `systemctl daemon-reload`, and restart Ollama by `systemctl restart ollama`.
 
-   - Ensure that the port (default is 11434) is not blocked by your firewall. For more information, see the [Ollama environment-variable documentation](https://docs.ollama.com/faq#setting-environment-variables-on-linux).
+   - Inside `/etc/systemd/system/ollama.service`, you need to add `Environment="OLLAMA_HOST=0.0.0.0:11434"`. (Change the port number if you are using a different one.) Then reload the systemd manager configuration with `systemctl daemon-reload`, and restart Ollama by `systemctl restart ollama`. For more information see [Ollama docs](https://github.com/ollama/ollama/blob/main/docs/faq.md#setting-environment-variables-on-linux)
+
+   - Ensure that the port (default is 11434) is not blocked by your firewall.
 
 #### Lemonade Connection Errors
 
@@ -229,6 +373,7 @@ If you're encountering a Lemonade connection error, it is likely due to the back
 
 1. **Check your Lemonade API URL:** Ensure that the API URL is correctly set in the settings menu.
 2. **Update API URL Based on OS:**
+
    - **Windows:** Use `http://host.docker.internal:8000`
    - **Mac:** Use `http://host.docker.internal:8000`
    - **Linux:** Use `http://<private_ip_of_host>:8000`
@@ -236,6 +381,7 @@ If you're encountering a Lemonade connection error, it is likely due to the back
    Adjust the port number if you're using a different one.
 
 3. **Ensure Lemonade Server is Running:**
+
    - Make sure your Lemonade server is running and accessible on the configured port (default is 8000).
    - Verify that Lemonade is configured to accept connections from all interfaces (`0.0.0.0`), not just localhost (`127.0.0.1`).
    - Ensure that the port (default is 8000) is not blocked by your firewall.
@@ -270,7 +416,6 @@ Vane runs on Next.js and handles all API requests. It works right away on the sa
 
 - [ ] Adding more widgets, integrations, search sources
 - [ ] Adding ability to create custom agents (name T.B.D.)
-- [ ] Adding authentication
 
 ## Support Us
 
@@ -286,7 +431,7 @@ We also accept donations to help sustain our project. If you would like to contr
 
 ## Contribution
 
-Vane is built on the idea that AI and large language models should be easy for everyone to use. If you find bugs or have ideas, please share them in via GitHub Issues. For more information on contributing to Vane you can read the [CONTRIBUTING.md](CONTRIBUTING.md) file to learn more about Vane and how you can contribute to it.
+Vane is built on the idea that AI and large language models should be easy for everyone to use. If you find bugs or have ideas, please share them in via GitHub Issues. For more information on contributing to Vane you can read the [CONTRIBUTING.md](CONTRIBUTING.md) file to learn more about Vane and how you can contribute.
 
 ## Help and Support
 
