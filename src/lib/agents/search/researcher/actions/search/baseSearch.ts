@@ -87,7 +87,9 @@ export const executeSearch = async (input: {
         resultChunks = allChunks.filter((c) => c.metadata.similarity > 0.5);
 
         // If the similarity filter removed all results, fall back to the
-        // top results sorted by similarity
+        // top results sorted by similarity so external SearXNG instances
+        // where `number_of_results` may be 0 but `results` is non-empty
+        // still produce useful output.
         if (resultChunks.length === 0 && allChunks.length > 0) {
           resultChunks = allChunks
             .sort((a, b) => b.metadata.similarity - a.metadata.similarity)
