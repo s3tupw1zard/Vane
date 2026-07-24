@@ -13,6 +13,8 @@ export type SearchAgentConfig = {
   embedding: BaseEmbedding<any>;
   mode: 'speed' | 'balanced' | 'quality';
   systemInstructions: string;
+  maxResultsPerQuery?: number;
+  maxTotalResults?: number;
 };
 
 export type SearchAgentInput = {
@@ -67,6 +69,8 @@ export type AdditionalConfig = {
   llm: BaseLLM<any>;
   embedding: BaseEmbedding<any>;
   session: SessionManager;
+  maxResultsPerQuery?: number;
+  maxTotalResults?: number;
 };
 
 export type ResearcherInput = {

@@ -50,6 +50,8 @@ const academicSearchAction: ResearchAction<typeof schema> = {
       searchConfig: {
         engines: ['arxiv', 'google scholar', 'pubmed'],
       },
+      maxResultsPerQuery: additionalConfig.maxResultsPerQuery,
+      maxTotalResults: additionalConfig.maxTotalResults,
     });
 
     return {

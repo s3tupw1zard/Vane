@@ -172,6 +172,8 @@ class Researcher {
         researchBlockId: researchBlockId,
         fileIds: input.config.fileIds,
         mode: input.config.mode,
+        maxResultsPerQuery: input.config.maxResultsPerQuery,
+        maxTotalResults: input.config.maxTotalResults,
       });
 
       actionOutput.push(...actionResults);

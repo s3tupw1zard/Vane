@@ -16,6 +16,8 @@ interface ChatRequestBody {
   history: Array<[string, string]>;
   stream?: boolean;
   systemInstructions?: string;
+  maxResultsPerQuery?: number;
+  maxTotalResults?: number;
 }
 
 export const POST = async (req: NextRequest) => {
@@ -64,6 +66,8 @@ export const POST = async (req: NextRequest) => {
         mode: body.optimizationMode,
         fileIds: [],
         systemInstructions: body.systemInstructions || '',
+        maxResultsPerQuery: body.maxResultsPerQuery,
+        maxTotalResults: body.maxTotalResults,
       },
       followUp: body.query,
       chatId: crypto.randomUUID(),

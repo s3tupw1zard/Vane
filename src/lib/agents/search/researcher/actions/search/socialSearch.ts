@@ -53,6 +53,8 @@ const socialSearchAction: ResearchAction<typeof schema> = {
         searchConfig: {
           engines: ['reddit'],
         },
+        maxResultsPerQuery: additionalConfig.maxResultsPerQuery,
+        maxTotalResults: additionalConfig.maxTotalResults,
       }),
       searchXquikQueries(input.queries),
     ]);
