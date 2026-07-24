@@ -11,6 +11,10 @@
 | 9 | pr/fix-openrouter-stream-empty-args-1151 | integration | 2026-07-24 | ✅ Resolved | Combined parseToolArguments helper with integration's extractJsonObject and error handling |
 | 18 | pr/main-1107 | integration | 2026-07-24 | ✅ Resolved | Merged README.md (Vane-MU features + original docs), accepted integration's minor code fixes |
 | 4 | pr/feat-youcom-search-provider-1164 | integration | 2026-07-24 | ✅ Resolved | Unified search provider support for SearXNG, fastCRW, and You.com across config and dispatcher |
+| 112 | pr-25-resolved | integration | 2026-07-24 | ✅ Merged | Consolidated error handling from PRs #22, #23, #25, #32 - prevents stuck message states |
+| 113 | pr-29-35-resolved | integration | 2026-07-24 | ✅ Merged | Consolidated Tavily provider + maxResultsPerQuery from PRs #29, #35 |
+| 114 | pr-31-resolved | integration | 2026-07-24 | ✅ Merged | Image search via Ollama vision (replaces PR #31) |
+| 115 | pr-33-resolved | integration | 2026-07-24 | ✅ Merged | MiniMax-M2.7-highspeed model (replaces PR #33) |
 
 ---
 
@@ -53,6 +57,40 @@
 - baseSearch.ts: Updated searchWeb dispatcher to support SearXNG, fastCRW, and You.com
 **Complexity:** 7/10 - Architectural merge to support multi-provider search
 
+### PR #112: Consolidated Error Handling (PRs #22, #23, #25, #32)
+**Conflicts:** 3 files (`src/lib/agents/search/index.ts`, `src/lib/agents/search/api.ts`, prompts)
+**Resolution:** 
+- Unified error handling structure with two-method pattern (searchAsync + _searchAsync)
+- Database status updates to 'error' on failure (critical from PR #25)
+- Error event emission to sessions for client-side error display
+- Integrated spelling fixes from PR #32
+**Complexity:** 6/10 - Consolidated 4 PRs into single implementation
+**Files Changed:** 3
+
+### PR #113: Tavily Provider + Result Limiting (PRs #29, #35)
+**Conflicts:** 11 files (config, dispatcher, types, API routes)
+**Resolution:**
+- Added Tavily as 4th search provider alongside SearXNG, fastCRW, You.com
+- Integrated maxResultsPerQuery and maxTotalResults limits for token efficiency
+- Updated config UI with searchProvider selection and tavilyAPIKey field
+**Complexity:** 7/10 - Multi-feature consolidation across search stack
+**Files Changed:** 11
+
+### PR #114: Image Search via Vision (PR #31)
+**Conflicts:** 3 files (vision API route, Attach component, README)
+**Resolution:**
+- Added POST /api/vision endpoint using OpenAI SDK with Ollama backend
+- Image detection in Attach component with automatic query generation
+- File input updated to accept image/* files
+**Complexity:** 4/10 - Clean feature addition, minimal conflicts
+**Files Changed:** 3
+
+### PR #115: MiniMax-M2.7-highspeed (PR #33)
+**Conflicts:** 1 file (`src/lib/models/providers/minimax/index.ts`)
+**Resolution:** Added M2.7-highspeed model variant to defaultChatModels array
+**Complexity:** 2/10 - Simple model addition
+**Files Changed:** 1
+
 ---
 
 ## Post-Resolution Checklist
@@ -67,12 +105,17 @@
 
 *Last updated: 2026-07-24*
 
-**Removed closed/merged PRs (Batch 2):** #22, #23, #25, #27, #29, #30, #31, #32, #33, #35
-- #22, #23, #25, #32: Error handling fixes consolidated into merged PR #25
-- #27: Raw response in errors - closed
-- #29: Tavily migration - closed
-- #30: HTML cleanup - closed
-- #31, #33: Features already merged independently
-- #35: maxResultsPerQuery - closed
+## Batch 2 Summary: Closed/Replaced PRs
+
+| Original PRs | Consolidated Into | Status | Description |
+|--------------|-------------------|--------|-------------|
+| #22, #23, #25, #32 | PR #112 | ✅ Merged | Error handling consolidation - prevents stuck message states |
+| #29, #35 | PR #113 | ✅ Merged | Tavily provider + maxResultsPerQuery feature |
+| #31 | PR #114 | ✅ Merged | Image search via Ollama vision model |
+| #33 | PR #115 | ✅ Merged | MiniMax-M2.7-highspeed model variant |
+| #27 | - | ❌ Closed | Raw LLM response in errors - not consolidated |
+| #30 | - | ❌ Closed | HTML cleanup - superseded by integration's Scraper class |
+
+**Total:** 10 original PRs → 4 consolidated PRs (#112, #113, #114, #115), 2 closed without replacement (#27, #30)
 
 
