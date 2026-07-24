@@ -2,6 +2,54 @@ import { JSDOM } from 'jsdom';
 import { Readability } from '@mozilla/readability';
 import { Mutex } from 'async-mutex';
 
+function isBlockedIPv4(ip: string): boolean {
+  const [a, b, c, d] = ip.split('.').map(Number);
+  return (
+    (a === 10) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168)
+  );
+}
+
+function isBlockedIPv6(ip: string): boolean {
+  return ip.startsWith('fe80:') || ip.startsWith('fc00:') || ip.startsWith('fd00:');
+}
+
+function isBlockedHostname(hostname: string): boolean {
+  return hostname.endsWith('.localhost') ||
+         hostname.endsWith('.local') ||
+         hostname.endsWith('.internal') ||
+         hostname.endsWith('.lan');
+}
+
+function assertSafeScrapeURL(url: string) {
+  const parsed = new URL(url);
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Error(`Only HTTP(S) protocols allowed: ${url}`);
+  }
+
+  if (parsed.hostname === 'localhost') {
+    throw new Error(`Localhost scraping blocked: ${url}`);
+  }
+
+  if (isBlockedHostname(parsed.hostname)) {
+    throw new Error(`Restricted hostname blocked: ${url}`);
+  }
+
+  const ipRegex = /^\d+\.\d+\.\d+\.\d+$/;
+  if (ipRegex.test(parsed.hostname)) {
+    if (isBlockedIPv4(parsed.hostname)) {
+      throw new Error(`Private IP address blocked: ${url}`);
+    }
+  }
+
+  if (parsed.hostname.includes(':')) {
+    if (isBlockedIPv6(parsed.hostname)) {
+      throw new Error(`Private IPv6 address blocked: ${url}`);
+    }
+  }
+}
+
 class Scraper {
   private static browser: any | undefined;
   private static IDLE_KILL_TIMEOUT = 30000;
@@ -57,6 +105,8 @@ class Scraper {
   static async scrape(
     url: string,
   ): Promise<{ content: string; title: string }> {
+    assertSafeScrapeURL(url);
+
     await this.initBrowser();
 
     if (!this.browser) throw new Error('Browser not initialized');
