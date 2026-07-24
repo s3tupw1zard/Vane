@@ -58,6 +58,7 @@ export type ClassifierOutput = {
     showWeatherWidget: boolean;
     showStockWidget: boolean;
     showCalculationWidget: boolean;
+    showCurrencyWidget: boolean;
   };
   standaloneFollowUp: string;
 };
@@ -117,6 +118,7 @@ export interface ResearchAction<
     additionalConfig: AdditionalConfig & {
       researchBlockId: string;
       fileIds: string[];
+      mode: SearchAgentConfig['mode'];
     },
   ) => Promise<ActionOutput>;
 }

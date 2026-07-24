@@ -140,6 +140,10 @@ class Researcher {
 
             if (existingIndex !== -1) {
               finalToolCalls[existingIndex].arguments = tc.arguments;
+              // Preserve thoughtSignature for Gemini 3 models
+              if (tc.thoughtSignature) {
+                finalToolCalls[existingIndex].thoughtSignature = tc.thoughtSignature;
+              }
             } else {
               finalToolCalls.push(tc);
             }
@@ -157,7 +161,7 @@ class Researcher {
 
       agentMessageHistory.push({
         role: 'assistant',
-        content: '',
+        content: null,
         tool_calls: finalToolCalls,
       });
 
@@ -167,6 +171,7 @@ class Researcher {
         session: session,
         researchBlockId: researchBlockId,
         fileIds: input.config.fileIds,
+        mode: input.config.mode,
       });
 
       actionOutput.push(...actionResults);
@@ -186,10 +191,22 @@ class Researcher {
       .flatMap((a) => a.results);
 
     const seenUrls = new Map<string, number>();
+    const seenTitles = new Set<string>();
 
     const filteredSearchResults = searchResults
       .map((result, index) => {
         if (result.metadata.url && !seenUrls.has(result.metadata.url)) {
+          // Deduplicate by normalized title to avoid citing the same paper
+          // from multiple academic platforms (e.g. PubMed, ScienceDirect,
+          // ResearchGate, Google Scholar) as separate sources.
+          if (result.metadata.title) {
+            const normalizedTitle = result.metadata.title.toLowerCase().trim();
+            if (seenTitles.has(normalizedTitle)) {
+              return undefined;
+            }
+            seenTitles.add(normalizedTitle);
+          }
+
           seenUrls.set(result.metadata.url, index);
           return result;
         } else if (result.metadata.url && seenUrls.has(result.metadata.url)) {
