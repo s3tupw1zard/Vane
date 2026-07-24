@@ -22,6 +22,17 @@ class SearchAgent {
             ? err.message
             : 'An unknown error occurred during search',
       });
+
+      await db
+        .update(messages)
+        .set({ status: 'error' })
+        .where(
+          and(
+            eq(messages.chatId, input.chatId),
+            eq(messages.messageId, input.messageId),
+          ),
+        )
+        .execute();
     }
   }
 
@@ -131,7 +142,7 @@ class SearchAgent {
       })
       .join('\n-------------\n');
 
-    const finalContextWithWidgets = `<search_results note="These are the search results and assistant can cite these">\n${finalContext}\n</search_results>\n<widgets_result noteForAssistant="Its output is already showed to the user, assistant can use this information to answer the query but do not CITE this as a souce">\n${widgetContext}\n</widgets_result>`;
+    const finalContextWithWidgets = `<search_results note="These are the search results and assistant can cite these">\n${finalContext}\n</search_results>\n<widgets_result noteForAssistant="Its output is already shown to the user, assistant can use this information to answer the query but do not CITE this as a source">\n${widgetContext}\n</widgets_result>`;
 
     const writerPrompt = getWriterPrompt(
       finalContextWithWidgets,
