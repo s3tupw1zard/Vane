@@ -1,3 +1,4 @@
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import ModelRegistry from '@/lib/models/registry';
 import { ModelWithProvider } from '@/lib/models/types';
@@ -6,9 +7,10 @@ import SessionManager from '@/lib/session';
 import { ChatTurnMessage } from '@/lib/types';
 import { SearchSources } from '@/lib/agents/search/types';
 import db from '@/lib/db';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { chats } from '@/lib/db/schema';
 import UploadManager from '@/lib/uploads/manager';
+import { requireAuth } from '@/lib/middleware';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -70,20 +72,22 @@ const safeValidateBody = (data: unknown) => {
 
 const ensureChatExists = async (input: {
   id: string;
+  userId: string;
   sources: SearchSources[];
   query: string;
   fileIds: string[];
 }) => {
   try {
-    const exists = await db.query.chats
-      .findFirst({
-        where: eq(chats.id, input.id),
-      })
-      .execute();
+    const [exists] = await db
+      .select()
+      .from(chats)
+      .where(and(eq(chats.id, input.id), eq(chats.userId, input.userId)))
+      .limit(1);
 
     if (!exists) {
       await db.insert(chats).values({
         id: input.id,
+        userId: input.userId,
         createdAt: new Date().toISOString(),
         sources: input.sources,
         title: input.query,
@@ -102,6 +106,10 @@ const ensureChatExists = async (input: {
 
 export const POST = async (req: Request) => {
   try {
+    // Auth check
+    const auth = await requireAuth(req as NextRequest);
+    if (!auth.success) return auth.error;
+
     const reqBody = (await req.json()) as Body;
 
     const parseBody = safeValidateBody(reqBody);
@@ -155,57 +163,72 @@ export const POST = async (req: Request) => {
     const responseStream = new TransformStream();
     const writer = responseStream.writable.getWriter();
     const encoder = new TextEncoder();
+    const keepAliveMs = 15_000;
+    let streamClosed = false;
+    let keepAliveInterval: ReturnType<typeof setInterval> | undefined;
+
+    const safeWrite = (payload: Record<string, unknown>) => {
+      if (streamClosed) return;
+
+      try {
+        writer.write(encoder.encode(JSON.stringify(payload) + '\n'));
+      } catch (error) {
+        console.warn('Failed to write chat stream payload:', error);
+      }
+    };
+
+    const safeClose = () => {
+      if (streamClosed) return;
+
+      streamClosed = true;
+
+      if (keepAliveInterval) {
+        clearInterval(keepAliveInterval);
+      }
+
+      try {
+        writer.close();
+      } catch (error) {
+        console.warn('Failed to close chat stream:', error);
+      }
+    };
+
+    keepAliveInterval = setInterval(() => {
+      safeWrite({ type: 'keepAlive' });
+    }, keepAliveMs);
+
+    safeWrite({ type: 'keepAlive' });
 
     const disconnect = session.subscribe((event: string, data: any) => {
       if (event === 'data') {
         if (data.type === 'block') {
-          writer.write(
-            encoder.encode(
-              JSON.stringify({
-                type: 'block',
-                block: data.block,
-              }) + '\n',
-            ),
-          );
+          safeWrite({
+            type: 'block',
+            block: data.block,
+          });
         } else if (data.type === 'updateBlock') {
-          writer.write(
-            encoder.encode(
-              JSON.stringify({
-                type: 'updateBlock',
-                blockId: data.blockId,
-                patch: data.patch,
-              }) + '\n',
-            ),
-          );
+          safeWrite({
+            type: 'updateBlock',
+            blockId: data.blockId,
+            patch: data.patch,
+          });
         } else if (data.type === 'researchComplete') {
-          writer.write(
-            encoder.encode(
-              JSON.stringify({
-                type: 'researchComplete',
-              }) + '\n',
-            ),
-          );
+          safeWrite({
+            type: 'researchComplete',
+          });
         }
       } else if (event === 'end') {
-        writer.write(
-          encoder.encode(
-            JSON.stringify({
-              type: 'messageEnd',
-            }) + '\n',
-          ),
-        );
-        writer.close();
+        safeWrite({
+          type: 'messageEnd',
+        });
+        safeClose();
         session.removeAllListeners();
       } else if (event === 'error') {
-        writer.write(
-          encoder.encode(
-            JSON.stringify({
-              type: 'error',
-              data: data.data,
-            }) + '\n',
-          ),
-        );
-        writer.close();
+        safeWrite({
+          type: 'error',
+          data: data.data,
+        });
+        safeClose();
         session.removeAllListeners();
       }
     });
@@ -223,10 +246,16 @@ export const POST = async (req: Request) => {
         fileIds: body.files,
         systemInstructions: body.systemInstructions || 'None',
       },
+    }).catch((err) => {
+      console.error('[chat/route] Unhandled searchAsync rejection:', err);
+      try {
+        session.emit('error', { data: 'An unexpected error occurred.' });
+      } catch (_) {}
     });
 
     ensureChatExists({
       id: body.message.chatId,
+      userId: auth.user.id,
       sources: body.sources as SearchSources[],
       fileIds: body.files,
       query: body.message.content,
@@ -234,13 +263,13 @@ export const POST = async (req: Request) => {
 
     req.signal.addEventListener('abort', () => {
       disconnect();
-      writer.close();
+      safeClose();
     });
 
     return new Response(responseStream.readable, {
       headers: {
         'Content-Type': 'text/event-stream',
-        Connection: 'keep-alive',
+        'Connection': 'keep-alive',
         'Cache-Control': 'no-cache, no-transform',
       },
     });

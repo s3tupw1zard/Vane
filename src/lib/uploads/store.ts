@@ -2,12 +2,12 @@ import BaseEmbedding from "../models/base/embedding";
 import UploadManager from "./manager";
 import computeSimilarity from "../utils/computeSimilarity";
 import { Chunk } from "../types";
-import { hashObj } from "../serverUtils";
-import fs from 'fs';
+import { hashObj } from '../utils/hash';
 
 type UploadStoreParams = {
     embeddingModel: BaseEmbedding<any>;
     fileIds: string[];
+    userId?: string;
 }
 
 type StoreRecord = {
@@ -20,23 +20,25 @@ type StoreRecord = {
 class UploadStore {
     embeddingModel: BaseEmbedding<any>;
     fileIds: string[];
+    userId?: string;
     records: StoreRecord[] = [];
 
     constructor(private params: UploadStoreParams) {
         this.embeddingModel = params.embeddingModel;
         this.fileIds = params.fileIds;
+        this.userId = params.userId;
         this.initializeStore()
     }
 
     initializeStore() {
         this.fileIds.forEach((fileId) => {
-            const file = UploadManager.getFile(fileId)
+            const file = UploadManager.getFile(fileId, this.userId)
 
             if (!file) {
-                throw new Error(`File with ID ${fileId} not found`);
+                throw new Error(`File with ID ${fileId} not found or access denied`);
             }
 
-            const chunks = UploadManager.getFileChunks(fileId);
+            const chunks = UploadManager.getFileChunks(fileId, this.userId);
 
             this.records.push(...chunks.map((chunk) => ({
                 embedding: chunk.embedding,
@@ -97,17 +99,17 @@ class UploadStore {
         return finalResults.slice(0, topK);
     }
 
-    static getFileData(fileIds: string[]): { fileName: string; initialContent: string }[] {
+    static getFileData(fileIds: string[], userId?: string): { fileName: string; initialContent: string }[] {
         const filesData: { fileName: string; initialContent: string }[] = [];
 
         fileIds.forEach((fileId) => {
-            const file = UploadManager.getFile(fileId)
+            const file = UploadManager.getFile(fileId, userId)
 
             if (!file) {
-                throw new Error(`File with ID ${fileId} not found`);
+                throw new Error(`File with ID ${fileId} not found or access denied`);
             }
 
-            const chunks = UploadManager.getFileChunks(fileId);
+            const chunks = UploadManager.getFileChunks(fileId, userId);
 
             filesData.push({
                 fileName: file.name,
