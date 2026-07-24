@@ -4,17 +4,48 @@ import { Model, ModelList, ProviderMetadata } from '../../types';
 import BaseEmbedding from '../../base/embedding';
 import BaseModelProvider from '../../base/provider';
 import BaseLLM from '../../base/llm';
-import MiniMaxLLM from './miniMaxLLM';
+import MiniMaxAnthropicLLM from './minimaxAnthropicLLM';
+import MiniMaxLLM from './minimaxLLM';
 
 interface MiniMaxConfig {
   apiKey: string;
-  baseURL?: string;
+  baseURL: string;
 }
 
-const DEFAULT_CHAT_MODELS: Model[] = [
-  { key: 'MiniMax-M3', name: 'MiniMax M3' },
-  { key: 'MiniMax-M2.7', name: 'MiniMax M2.7' },
-  { key: 'MiniMax-M2.7-highspeed', name: 'MiniMax M2.7 High Speed' },
+const DEFAULT_BASE_URL = 'https://api.minimax.io/v1';
+
+const endpointOptions = [
+  {
+    name: 'Global (OpenAI)',
+    value: DEFAULT_BASE_URL,
+  },
+  {
+    name: 'Global (Anthropic)',
+    value: 'https://api.minimax.io/anthropic',
+  },
+  {
+    name: 'China (OpenAI)',
+    value: 'https://api.minimaxi.com/v1',
+  },
+  {
+    name: 'China (Anthropic)',
+    value: 'https://api.minimaxi.com/anthropic',
+  },
+];
+
+const supportedBaseURLs = new Set(
+  endpointOptions.map((endpoint) => endpoint.value),
+);
+
+const defaultChatModels: Model[] = [
+  {
+    name: 'MiniMax-M3',
+    key: 'MiniMax-M3',
+  },
+  {
+    name: 'MiniMax-M2.7',
+    key: 'MiniMax-M2.7',
+  },
 ];
 
 const providerConfigFields: UIConfigField[] = [
@@ -29,12 +60,13 @@ const providerConfigFields: UIConfigField[] = [
     scope: 'server',
   },
   {
-    type: 'string',
-    name: 'Base URL',
+    type: 'select',
+    name: 'API Endpoint',
     key: 'baseURL',
-    description: 'MiniMax API base URL (default: https://api.minimax.io/v1)',
-    required: false,
-    placeholder: 'https://api.minimax.io/v1',
+    description: 'Choose the MiniMax region and API protocol',
+    required: true,
+    default: DEFAULT_BASE_URL,
+    options: endpointOptions,
     env: 'MINIMAX_BASE_URL',
     scope: 'server',
   },
@@ -48,7 +80,7 @@ class MiniMaxProvider extends BaseModelProvider<MiniMaxConfig> {
   async getDefaultModels(): Promise<ModelList> {
     return {
       embedding: [],
-      chat: DEFAULT_CHAT_MODELS,
+      chat: defaultChatModels,
     };
   }
 
@@ -64,8 +96,7 @@ class MiniMaxProvider extends BaseModelProvider<MiniMaxConfig> {
 
   async loadChatModel(key: string): Promise<BaseLLM<any>> {
     const modelList = await this.getModelList();
-
-    const exists = modelList.chat.find((m) => m.key === key);
+    const exists = modelList.chat.find((model) => model.key === key);
 
     if (!exists) {
       throw new Error(
@@ -73,11 +104,17 @@ class MiniMaxProvider extends BaseModelProvider<MiniMaxConfig> {
       );
     }
 
-    return new MiniMaxLLM({
+    const config = {
       apiKey: this.config.apiKey,
       model: key,
-      baseURL: this.config.baseURL || 'https://api.minimax.io/v1',
-    });
+      baseURL: this.config.baseURL,
+    };
+
+    if (this.config.baseURL.endsWith('/anthropic')) {
+      return new MiniMaxAnthropicLLM(config);
+    }
+
+    return new MiniMaxLLM(config);
   }
 
   async loadEmbeddingModel(key: string): Promise<BaseEmbedding<any>> {
@@ -90,9 +127,15 @@ class MiniMaxProvider extends BaseModelProvider<MiniMaxConfig> {
     if (!raw.apiKey)
       throw new Error('Invalid config provided. API key must be provided');
 
+    const baseURL = raw.baseURL ? String(raw.baseURL) : DEFAULT_BASE_URL;
+
+    if (!supportedBaseURLs.has(baseURL)) {
+      throw new Error('Invalid config provided. Unsupported API endpoint');
+    }
+
     return {
       apiKey: String(raw.apiKey),
-      ...(raw.baseURL && { baseURL: String(raw.baseURL) }),
+      baseURL,
     };
   }
 
