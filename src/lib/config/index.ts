@@ -17,7 +17,10 @@ class ConfigManager {
     personalization: {},
     modelProviders: [],
     search: {
+      searchProvider: '',
       searxngURL: '',
+      crwURL: '',
+      crwApiKey: '',
     },
   };
   uiConfigSections: UIConfigSections = {
@@ -103,6 +106,26 @@ class ConfigManager {
     modelProviders: [],
     search: [
       {
+        name: 'Search Provider',
+        key: 'searchProvider',
+        type: 'select',
+        options: [
+          {
+            name: 'SearXNG',
+            value: 'searxng',
+          },
+          {
+            name: 'fastCRW',
+            value: 'crw',
+          },
+        ],
+        required: false,
+        description: 'The backend used for general web search.',
+        default: 'searxng',
+        scope: 'server',
+        env: 'SEARCH_PROVIDER',
+      },
+      {
         name: 'SearXNG URL',
         key: 'searxngURL',
         type: 'string',
@@ -112,6 +135,30 @@ class ConfigManager {
         default: '',
         scope: 'server',
         env: 'SEARXNG_API_URL',
+      },
+      {
+        name: 'fastCRW URL',
+        key: 'crwURL',
+        type: 'string',
+        required: false,
+        description:
+          'The base URL of fastCRW (Firecrawl-compatible web scraper; single binary, self-host or cloud)',
+        placeholder: 'https://fastcrw.com/api',
+        default: 'https://fastcrw.com/api',
+        scope: 'server',
+        env: 'CRW_API_URL',
+      },
+      {
+        name: 'fastCRW API Key',
+        key: 'crwApiKey',
+        type: 'password',
+        required: false,
+        description:
+          'Bearer API key for fastCRW cloud (leave empty for keyless self-host)',
+        placeholder: 'fc-...',
+        default: '',
+        scope: 'server',
+        env: 'CRW_API_KEY',
       },
     ],
   };
@@ -228,9 +275,24 @@ class ConfigManager {
 
     /* search section */
     this.uiConfigSections.search.forEach((f) => {
-      if (f.env && !this.currentConfig.search[f.key]) {
-        this.currentConfig.search[f.key] =
-          process.env[f.env] ?? f.default ?? '';
+      if (!f.env) return;
+
+      const envValue = process.env[f.env]?.trim();
+      if (envValue) {
+        if (f.key === 'searxngURL') {
+          try {
+            new URL(envValue);
+          } catch {
+            return;
+          }
+        }
+
+        this.currentConfig.search[f.key] = envValue;
+        return;
+      }
+
+      if (!this.currentConfig.search[f.key]) {
+        this.currentConfig.search[f.key] = f.default ?? '';
       }
     });
 
@@ -255,9 +317,19 @@ class ConfigManager {
     const parts = key.split('.');
     if (parts.length === 0) return;
 
+    // Prevent prototype pollution by checking for restricted keys in any part of the path
+    const isRestricted = parts.some(
+      (part) =>
+        part === '__proto__' ||
+        part === 'constructor' ||
+        part === 'prototype',
+    );
+    if (isRestricted) return;
+
     let target: any = this.currentConfig;
     for (let i = 0; i < parts.length - 1; i++) {
       const part = parts[i];
+
       if (target[part] === null || typeof target[part] !== 'object') {
         target[part] = {};
       }

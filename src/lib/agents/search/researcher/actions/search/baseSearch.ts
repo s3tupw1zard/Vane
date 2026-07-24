@@ -1,6 +1,8 @@
 import BaseEmbedding from '@/lib/models/base/embedding';
 import BaseLLM from '@/lib/models/base/llm';
 import { searchSearxng, SearxngSearchOptions } from '@/lib/searxng';
+import { searchCrw } from '@/lib/crw';
+import { getSearchProvider } from '@/lib/config/serverRegistry';
 import SessionManager from '@/lib/session';
 import { Chunk, ResearchBlock, SearchResultsResearchBlock } from '@/lib/types';
 import { SearchAgentConfig } from '../../../types';
@@ -8,6 +10,17 @@ import computeSimilarity from '@/lib/utils/computeSimilarity';
 import z from 'zod';
 import Scraper from '@/lib/scraper';
 import { splitText } from '@/lib/utils/splitText';
+
+/*
+ * Dispatches a general web search to the configured provider. Defaults to
+ * SearXNG; fastCRW (Firecrawl-compatible) is selectable via search config.
+ */
+const searchWeb = async (query: string, opts?: SearxngSearchOptions) => {
+  if (getSearchProvider() === 'crw') {
+    return searchCrw(query);
+  }
+  return searchSearxng(query, opts);
+};
 
 export const executeSearch = async (input: {
   queries: string[];
@@ -41,35 +54,29 @@ export const executeSearch = async (input: {
     const results: Chunk[] = [];
 
     const search = async (q: string) => {
-      const res = await searchSearxng(q, {
+      const res = await searchWeb(q, {
         ...(input.searchConfig ? input.searchConfig : {}),
       });
 
       let resultChunks: Chunk[] = [];
 
       try {
-        const queryEmbedding = (await input.embedding.embedText([q]))[0];
+        const contents = res.results.map((r) => r.content || r.title);
+        const embeddings = await input.embedding.embedText([q, ...contents]);
+        const queryEmbedding = embeddings[0];
+        const chunkEmbeddings = embeddings.slice(1);
 
-        resultChunks = (
-          await Promise.all(
-            res.results.map(async (r) => {
-              const content = r.content || r.title;
-              const chunkEmbedding = (
-                await input.embedding.embedText([content])
-              )[0];
-
-              return {
-                content,
-                metadata: {
-                  title: r.title,
-                  url: r.url,
-                  similarity: computeSimilarity(queryEmbedding, chunkEmbedding),
-                  embedding: chunkEmbedding,
-                },
-              };
-            }),
-          )
-        ).filter((c) => c.metadata.similarity > 0.5);
+        resultChunks = res.results
+          .map((r, i) => ({
+            content: contents[i],
+            metadata: {
+              title: r.title,
+              url: r.url,
+              similarity: computeSimilarity(queryEmbedding, chunkEmbeddings[i]),
+              embedding: chunkEmbeddings[i],
+            },
+          }))
+          .filter((c) => c.metadata.similarity > 0.5);
       } catch (err) {
         resultChunks = res.results.map((r) => {
           const content = r.content || r.title;
@@ -176,7 +183,7 @@ export const executeSearch = async (input: {
     const searchResults: Chunk[] = [];
 
     const search = async (q: string) => {
-      const res = await searchSearxng(q, {
+      const res = await searchWeb(q, {
         ...(input.searchConfig ? input.searchConfig : {}),
       });
 

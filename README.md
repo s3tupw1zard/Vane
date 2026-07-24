@@ -7,6 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/ItzCrazyKns/Vane/blob/master/LICENSE)
 [![GitHub last commit](https://img.shields.io/github/last-commit/ItzCrazyKns/Vane?color=green)](https://github.com/ItzCrazyKns/Vane/commits/master)
 [![Discord](https://dcbadge.limes.pink/api/server/26aArMy8tT?style=flat)](https://discord.gg/26aArMy8tT)
+[![Chat with Repo](https://badge.forgithub.com/ItzCrazyKns/Perplexica?badge=chat)](https://uithub.com/ItzCrazyKns/Perplexica)
 
 Vane is a **privacy-focused AI answering engine** that runs entirely on your own hardware. It combines knowledge from the vast internet with support for **local LLMs** (Ollama) and cloud providers (OpenAI, Claude, Groq), delivering accurate answers with **cited sources** while keeping your searches completely private.
 
@@ -25,6 +26,8 @@ Want to know more about its architecture and how it works? You can read it [here
 🧩 **Widgets** - Helpful UI cards that show up when relevant, like weather, calculations, stock prices, and other quick lookups.
 
 🔍 **Web search powered by SearxNG** - Access multiple search engines while keeping your identity private. Support for Tavily and Exa coming soon for even better results.
+
+𝕏 **Optional X search powered by Xquik** - Set `XQUIK_API_KEY` to add current public X posts to discussion searches. Follow the [Xquik quickstart](https://docs.xquik.com/quickstart) to create an API key. Xquik is an independent closed-source hosted service. Not affiliated with X Corp. "Twitter" and "X" are trademarks of X Corp.
 
 📷 **Image and video search** - Find visual content alongside text results. Search isn't limited to just articles anymore.
 
@@ -45,8 +48,7 @@ Want to know more about its architecture and how it works? You can read it [here
 Vane's development is powered by the generous support of our sponsors. Their contributions help keep this project free, open-source, and accessible to everyone.
 
 <div align="center">
-  
-  
+
 <a href="https://www.warp.dev/perplexica">
   <img alt="Warp Terminal" src=".assets/sponsers/warp.png" width="100%">
 </a>
@@ -129,6 +131,23 @@ If you prefer to build from source or need more control:
 
 **Note**: After the containers are built, you can start Vane directly from Docker without having to open a terminal.
 
+### Kubernetes (Helm)
+
+A Helm chart is available in [`charts/vane`](charts/vane) to deploy Vane on Kubernetes. It supports both official images through a single `variant` switch:
+
+- `variant=full` (default) deploys `itzcrazykns1337/vane:latest` with the bundled SearxNG - no extra setup required.
+- `variant=slim` deploys `itzcrazykns1337/vane:slim-latest` and either deploys a SearxNG instance for you (`searxng.deploy=true`) or points at an existing one (`searxng.url`).
+
+```bash
+# Full image (Vane + bundled SearxNG)
+helm install vane ./charts/vane
+
+# Slim image with a chart-managed SearxNG
+helm install vane ./charts/vane --set variant=slim --set searxng.deploy=true
+```
+
+See the [chart README](charts/vane/README.md) for the full list of options (persistence, ingress, providers, etc.).
+
 ### Non-Docker Installation
 
 1. Install SearXNG and allow `JSON` format in the SearXNG settings. Make sure Wolfram Alpha search engine is also enabled.
@@ -179,7 +198,6 @@ If you're encountering an Ollama connection error, it is likely due to the backe
 
 1. **Check your Ollama API URL:** Ensure that the API URL is correctly set in the settings menu.
 2. **Update API URL Based on OS:**
-
    - **Windows:** Use `http://host.docker.internal:11434`
    - **Mac:** Use `http://host.docker.internal:11434`
    - **Linux:** Use `http://<private_ip_of_host>:11434`
@@ -187,10 +205,9 @@ If you're encountering an Ollama connection error, it is likely due to the backe
    Adjust the port number if you're using a different one.
 
 3. **Linux Users - Expose Ollama to Network:**
+   - Inside `/etc/systemd/system/ollama.service`, you need to add `Environment="OLLAMA_HOST=0.0.0.0:11434"`. (Change the port number if you are using a different one.) Then reload the systemd manager configuration with `systemctl daemon-reload`, and restart Ollama by `systemctl restart ollama`.
 
-   - Inside `/etc/systemd/system/ollama.service`, you need to add `Environment="OLLAMA_HOST=0.0.0.0:11434"`. (Change the port number if you are using a different one.) Then reload the systemd manager configuration with `systemctl daemon-reload`, and restart Ollama by `systemctl restart ollama`. For more information see [Ollama docs](https://github.com/ollama/ollama/blob/main/docs/faq.md#setting-environment-variables-on-linux)
-
-   - Ensure that the port (default is 11434) is not blocked by your firewall.
+   - Ensure that the port (default is 11434) is not blocked by your firewall. For more information, see the [Ollama environment-variable documentation](https://docs.ollama.com/faq#setting-environment-variables-on-linux).
 
 #### Lemonade Connection Errors
 
@@ -198,7 +215,6 @@ If you're encountering a Lemonade connection error, it is likely due to the back
 
 1. **Check your Lemonade API URL:** Ensure that the API URL is correctly set in the settings menu.
 2. **Update API URL Based on OS:**
-
    - **Windows:** Use `http://host.docker.internal:8000`
    - **Mac:** Use `http://host.docker.internal:8000`
    - **Linux:** Use `http://<private_ip_of_host>:8000`
@@ -206,7 +222,6 @@ If you're encountering a Lemonade connection error, it is likely due to the back
    Adjust the port number if you're using a different one.
 
 3. **Ensure Lemonade Server is Running:**
-
    - Make sure your Lemonade server is running and accessible on the configured port (default is 8000).
    - Verify that Lemonade is configured to accept connections from all interfaces (`0.0.0.0`), not just localhost (`127.0.0.1`).
    - Ensure that the port (default is 8000) is not blocked by your firewall.
