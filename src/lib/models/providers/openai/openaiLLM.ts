@@ -23,70 +23,79 @@ import { extractJsonObject } from '@/lib/utils/extractJson';
 type OpenAIConfig = {
   apiKey: string;
   model: string;
-  baseURL?: string;
+  baseURL: string;
   options?: GenerateOptions;
 };
 
 class OpenAILLM extends BaseLLM<OpenAIConfig> {
-  openAIClient: OpenAI;
+  protected openAIClient: OpenAI;
 
   constructor(protected config: OpenAIConfig) {
     super(config);
 
     this.openAIClient = new OpenAI({
       apiKey: this.config.apiKey,
-      baseURL: this.config.baseURL || 'https://api.openai.com/v1',
+      baseURL: this.config.baseURL,
     });
   }
 
-  convertToOpenAIMessages(messages: Message[]): ChatCompletionMessageParam[] {
-    return messages.map((msg) => {
-      if (msg.role === 'tool') {
-        return {
+  private convertToOpenAIMessages(
+    messages: Message[],
+  ): ChatCompletionMessageParam[] {
+    const openaiMessages: ChatCompletionMessageParam[] = [];
+
+    for (const message of messages) {
+      if (message.role === 'tool') {
+        openaiMessages.push({
           role: 'tool',
-          tool_call_id: msg.id,
-          content: msg.content,
-        } as ChatCompletionToolMessageParam;
-      } else if (msg.role === 'assistant') {
-        return {
-          role: 'assistant',
-          content: msg.content,
-          ...(msg.tool_calls &&
-            msg.tool_calls.length > 0 && {
-              tool_calls: msg.tool_calls?.map((tc) => ({
-                id: tc.id,
-                type: 'function',
-                function: {
-                  name: tc.name,
-                  arguments: JSON.stringify(tc.arguments),
-                },
-              })),
-            }),
-        } as ChatCompletionAssistantMessageParam;
+          tool_call_id: message.id,
+          content: message.content,
+        });
+        continue;
       }
 
-      return msg;
-    });
+      if (message.role === 'assistant' && message.tool_calls?.length) {
+        const toolCalls = message.tool_calls.map((tc) => ({
+          id: tc.id,
+          type: 'function' as const,
+          function: {
+            name: tc.name,
+            arguments: JSON.stringify(tc.arguments),
+          },
+        }));
+
+        openaiMessages.push({
+          role: 'assistant',
+          tool_calls: toolCalls,
+          content: message.content || null,
+        });
+        continue;
+      }
+
+      openaiMessages.push({
+        role: message.role,
+        content: message.content,
+      });
+    }
+
+    return openaiMessages;
   }
 
   async generateText(input: GenerateTextInput): Promise<GenerateTextOutput> {
-    const openaiTools: ChatCompletionTool[] = [];
-
-    input.tools?.forEach((tool) => {
-      openaiTools.push({
-        type: 'function',
-        function: {
-          name: tool.name,
-          description: tool.description,
-          parameters: z.toJSONSchema(tool.schema),
-        },
-      });
-    });
-
     const response = await this.openAIClient.chat.completions.create({
       model: this.config.model,
-      tools: openaiTools.length > 0 ? openaiTools : undefined,
       messages: this.convertToOpenAIMessages(input.messages),
+      tools:
+        input.tools?.length > 0
+          ? input.tools.map((tool) => ({
+              type: 'function' as const,
+              function: {
+                name: tool.name,
+                description: tool.description,
+                parameters: z.toJSONSchema(tool.schema),
+              },
+            }))
+          : undefined,
       temperature:
         input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
       top_p: input.options?.topP ?? this.config.options?.topP,
@@ -101,44 +110,42 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
     });
 
     if (response.choices && response.choices.length > 0) {
+      const choice = response.choices[0];
+      const content = choice.message.content || '';
+      const toolCalls =
+        choice.message.tool_calls?.map((tc) => ({
+          id: tc.id,
+          name: tc.function.name,
+          arguments: JSON.parse(tc.function.arguments || '{}'),
+        })) || [];
+
       return {
-        content: response.choices[0].message.content!,
-        toolCalls:
-          response.choices[0].message.tool_calls
-            ?.map((tc) => {
-              if (tc.type === 'function') {
-                return {
-                  name: tc.function.name,
-                  id: tc.id,
-                  arguments: JSON.parse(tc.function.arguments),
-                };
-              }
-            })
-            .filter((tc) => tc !== undefined) || [],
+        content,
+        toolCalls,
         additionalInfo: {
-          finishReason: response.choices[0].finish_reason,
+          finishReason: choice.finish_reason,
         },
       };
     }
 
-    throw new Error('No response from OpenAI');
+    return {
+      content: '',
+      toolCalls: [],
+      additionalInfo: {},
+    };
   }
 
   async *streamText(
     input: GenerateTextInput,
   ): AsyncGenerator<StreamTextOutput> {
-    const openaiTools: ChatCompletionTool[] = [];
-
-    input.tools?.forEach((tool) => {
-      openaiTools.push({
-        type: 'function',
-        function: {
-          name: tool.name,
-          description: tool.description,
-          parameters: z.toJSONSchema(tool.schema),
-        },
-      });
-    });
+    const openaiTools: ChatCompletionTool[] = input.tools?.map((tool) => ({
+      type: 'function',
+      function: {
+        name: tool.name,
+        description: tool.description,
+        parameters: z.toJSONSchema(tool.schema),
+      },
+    })) as ChatCompletionTool[];
 
     const stream = await this.openAIClient.chat.completions.create({
       model: this.config.model,
@@ -161,26 +168,43 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
     let recievedToolCalls: { name: string; id: string; arguments: string }[] =
       [];
 
+    const parseToolArguments = (argumentsText: string) => {
+      if (!argumentsText.trim()) return {};
+
+      try {
+        return parse(argumentsText);
+      } catch (err) {
+        // Some OpenAI-compatible providers stream an empty or partial arguments
+        // chunk before the full JSON arrives. Keep streaming instead of failing.
+        return {};
+      }
+    };
+
     for await (const chunk of stream) {
       if (chunk.choices && chunk.choices.length > 0) {
         const toolCalls = chunk.choices[0].delta.tool_calls;
         yield {
           contentChunk: chunk.choices[0].delta.content || '',
           toolCallChunk:
-            toolCalls?.map((tc) => {
-              if (!recievedToolCalls[tc.index]) {
-                const call = {
-                  name: tc.function?.name!,
-                  id: tc.id!,
-                  arguments: tc.function?.arguments || '',
-                };
-                recievedToolCalls.push(call);
-                return {
-                  ...call,
-                  arguments: parse(call.arguments.trim() || '{}'),
-                };
-              } else {
+            toolCalls
+              ?.map((tc) => {
                 const existingCall = recievedToolCalls[tc.index];
+
+                if (!existingCall) {
+                  if (!tc.id || !tc.function?.name) return undefined;
+
+                  const call = {
+                    name: tc.function.name,
+                    id: tc.id,
+                    arguments: tc.function.arguments || '',
+                  };
+                  recievedToolCalls[tc.index] = call;
+                  return {
+                    ...call,
+                    arguments: parseToolArguments(call.arguments),
+                  };
+                }
+
                 existingCall.arguments += tc.function?.arguments || '';
                 // Some providers (e.g. Anthropic's OpenAI-compatible endpoint)
                 // stream tool-call deltas where the accumulated arguments are
@@ -188,10 +212,10 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
                 // empty/whitespace string, so fall back to an empty object.
                 return {
                   ...existingCall,
-                  arguments: parse(existingCall.arguments.trim() || '{}'),
+                  arguments: parseToolArguments(existingCall.arguments),
                 };
-              }
-            }) || [],
+              })
+              .filter((tc) => tc !== undefined) || [],
           done: chunk.choices[0].finish_reason !== null,
           additionalInfo: {
             finishReason: chunk.choices[0].finish_reason,
@@ -250,59 +274,33 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
         // repair to jsonrepair, returning a parseable JSON string.
         return input.schema.parse(JSON.parse(extractJsonObject(raw))) as T;
       } catch (err) {
-        // Keep the failure-path diagnostic: finish_reason + usage distinguish
-        // truncation (finish_reason=length) from malformation, and raw content
-        // shows exactly what the model returned so the parse error is debuggable.
         throw new Error(
-          `Error parsing response from OpenAI: ${err}\n` +
+          `Error parsing response from OpenAI: ${err instanceof Error ? err.message : err}\n` +
             `finish_reason=${choice.finish_reason}\n` +
-            `usage=${JSON.stringify((response as { usage?: unknown }).usage)}\n` +
-            `raw=${raw}`,
+            `usage=${JSON.stringify((response as { usage?: unknown }).usage)}`,
         );
       }
     }
 
-    throw new Error('No response from OpenAI');
+    throw new Error('Error parsing response from OpenAI: no choices');
   }
 
   async *streamObject<T>(input: GenerateObjectInput): AsyncGenerator<T> {
-    let recievedObj: string = '';
+    let receivedObject = '';
 
-    const stream = this.openAIClient.responses.stream({
-      model: this.config.model,
-      input: input.messages,
-      temperature:
-        input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
-      top_p: input.options?.topP ?? this.config.options?.topP,
-      max_completion_tokens:
-        input.options?.maxTokens ?? this.config.options?.maxTokens,
-      stop: input.options?.stopSequences ?? this.config.options?.stopSequences,
-      frequency_penalty:
-        input.options?.frequencyPenalty ??
-        this.config.options?.frequencyPenalty,
-      presence_penalty:
-        input.options?.presencePenalty ?? this.config.options?.presencePenalty,
-      text: {
-        format: zodTextFormat(input.schema, 'object'),
+    for await (const chunk of this.streamText({
+      ...input,
+      options: {
+        ...input.options,
+        stopSequences: [],
       },
-    });
+    })) {
+      receivedObject += chunk.contentChunk;
 
-    for await (const chunk of stream) {
-      if (chunk.type === 'response.output_text.delta' && chunk.delta) {
-        recievedObj += chunk.delta;
-
-        try {
-          yield parse(recievedObj) as T;
-        } catch (err) {
-          console.log('Error parsing partial object from OpenAI:', err);
-          yield {} as T;
-        }
-      } else if (chunk.type === 'response.output_text.done' && chunk.text) {
-        try {
-          yield parse(chunk.text) as T;
-        } catch (err) {
-          throw new Error(`Error parsing response from OpenAI: ${err}`);
-        }
+      try {
+        yield input.schema.parse(JSON.parse(receivedObject)) as T;
+      } catch {
+        continue;
       }
     }
   }
