@@ -1,4 +1,4 @@
-# Vane 🔍
+# Vane-MU 🔍
 
 [![GitHub Repo stars](https://img.shields.io/github/stars/ItzCrazyKns/Vane?style=social)](https://github.com/ItzCrazyKns/Vane/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/ItzCrazyKns/Vane?style=social)](https://github.com/ItzCrazyKns/Vane/network/members)
@@ -8,13 +8,17 @@
 [![GitHub last commit](https://img.shields.io/github/last-commit/ItzCrazyKns/Vane?color=green)](https://github.com/ItzCrazyKns/Vane/commits/master)
 [![Discord](https://dcbadge.limes.pink/api/server/26aArMy8tT?style=flat)](https://discord.gg/26aArMy8tT)
 
-Vane is a **privacy-focused AI answering engine** that runs entirely on your own hardware. It combines knowledge from the vast internet with support for **local LLMs** (Ollama) and cloud providers (OpenAI, Claude, Groq), delivering accurate answers with **cited sources** while keeping your searches completely private.
+**Vane-MU** is the multi-user fork of [Vane](https://github.com/ItzCrazyKns/Vane), a privacy-focused AI answering engine. Vane-MU extends Vane with built-in user authentication, role-based access control, and a dedicated admin panel — allowing you to run a private AI search platform for multiple users.
 
 ![preview](.assets/vane-screenshot.png)
 
-Want to know more about its architecture and how it works? You can read it [here](https://github.com/ItzCrazyKns/Vane/tree/master/docs/architecture/README.md).
+> 📖 **Architecture** — Want to know how Vane works under the hood? See the [Original Vane Architecture Docs](https://github.com/ItzCrazyKns/Vane/tree/master/docs/architecture/README.md).
 
 ## ✨ Features
+
+All the original Vane features, plus multi-user support:
+
+### Original Vane Features
 
 🤖 **Support for all major AI providers** - Use local LLMs through Ollama or connect to OpenAI, Anthropic Claude, Google Gemini, Groq, and more. Mix and match models based on your needs.
 
@@ -25,6 +29,8 @@ Want to know more about its architecture and how it works? You can read it [here
 🧩 **Widgets** - Helpful UI cards that show up when relevant, like weather, calculations, stock prices, and other quick lookups.
 
 🔍 **Web search powered by SearxNG** - Access multiple search engines while keeping your identity private. Support for Tavily and Exa coming soon for even better results.
+
+𝕏 **Optional X search powered by Xquik** - Set `XQUIK_API_KEY` to add current public X posts to discussion searches. Follow the [Xquik quickstart](https://docs.xquik.com/quickstart) to create an API key. Xquik is an independent closed-source hosted service. Not affiliated with X Corp. "Twitter" and "X" are trademarks of X Corp.
 
 📷 **Image and video search** - Find visual content alongside text results. Search isn't limited to just articles anymore.
 
@@ -38,15 +44,170 @@ Want to know more about its architecture and how it works? You can read it [here
 
 🕒 **Search history** - Every search is saved locally so you can revisit your discoveries anytime. Your research is never lost.
 
-✨ **More coming soon** - We're actively developing new features based on community feedback. Join our Discord to help shape Vane's future!
+### Multi-User Features (Vane-MU)
+
+- **🔐 User Authentication** — Local username/password accounts. No third-party SSO required.
+- **👤 User Management** — Admins can create, reset passwords, and delete user accounts.
+- **🛡️ Role-Based Access Control** — Two roles: `admin` and `user`. Admin-only settings (Models, Search) are hidden from regular users.
+- **⚙️ Admin Panel** — A dedicated `/admin` dashboard for managing users and configuring system-wide settings.
+- **📊 Per-User History** — Search history is scoped to each user account.
+- **🚪 Logout Button** — Available in the sidebar for all users.
+
+## 🏗️ User Roles
+
+| Role | Access |
+|------|--------|
+| `admin` | Full access: Settings (Preferences, Personalization, Models, Search), Admin Panel, User Management |
+| `user` | Settings: Preferences and Personalization only. No access to Models, Search, or Admin Panel. |
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- npm or yarn
+- [SearXNG](https://github.com/searxng/searxng) instance (or use the bundled instance via Docker)
+- One or more AI provider API keys (OpenAI, Claude, Gemini, Groq, Ollama, etc.)
+
+### Option 1 — Docker (Recommended)
+
+**Using pre-built Vane-MU image:**
+
+```bash
+docker run -d -p 3000:3000 -v vane-mu-data:/home/vane/data --name vane-mu itzcrazykns1337/vane:latest
+```
+
+Open http://localhost:3000 and complete the first-time setup (this creates the initial admin account).
+
+**Build from source:**
+
+```bash
+# Clone the repository
+git clone https://github.com/s3tupw1zard/Vane.git
+cd Vane
+
+# Build with Docker
+docker build -t vane-mu .
+docker run -d -p 3000:3000 -v vane-mu-data:/home/vane/data --name vane-mu vane-mu
+```
+
+### Option 2 — Docker Compose
+
+```bash
+git clone https://github.com/s3tupw1zard/Vane.git
+cd Vane
+docker-compose up -d
+```
+
+### Option 3 — Local Development
+
+```bash
+git clone https://github.com/s3tupw1zard/Vane.git
+cd Vane
+npm install
+npm run dev
+```
+
+Then open http://localhost:3000 and complete the setup wizard to create your admin account.
+
+## 🔑 Default Admin Credentials (First Setup)
+
+On first run, the setup wizard prompts you to create an admin account. This is the only time an account can be created without authentication — after that, only admins can add users.
+
+## ⚙️ Admin Panel
+
+Access the admin panel by clicking the **gear icon → Admin Panel** in the sidebar (admin users only).
+
+### User Management
+
+- View all registered users (username, role, creation date)
+- Create new user accounts
+- Reset a user's password
+- Delete user accounts
+
+### System Settings
+
+- **Models** — Configure AI model providers and endpoints (admin only)
+- **Search** — Configure SearXNG and search behaviour (admin only)
+
+## 🌐 Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SEARXNG_API_URL` | `http://localhost:8080` | SearXNG instance URL |
+| `DATABASE_URL` | `file:./data/vane.db` | SQLite database path |
+| `SESSION_SECRET` | _(required)_ | Secret for signing session tokens |
+| `JWT_SECRET` | _(required in production)_ | Secret for JWT tokens. In production (`NODE_ENV=production`), the app refuses to start without this. |
+| `NEXT_PUBLIC_VERSION` | `1.12.2` | Version shown in Settings footer |
+| `XQUIK_API_KEY` | _(optional)_ | Xquik API key for X/Twitter search integration |
+
+## 🔒 Security Notes
+
+- Passwords are hashed with **bcryptjs**
+- Sessions are managed via **HTTP-only cookies** using **jose** (JWT)
+- Admin API routes are protected by server-side `requireAdmin` middleware
+- Users cannot access or configure AI model providers or search settings
+- **JWT_SECRET enforcement**: In production (`NODE_ENV=production`), the app **refuses to start** without a valid `JWT_SECRET` environment variable — there is no fallback. In development, a placeholder key is used with a console warning. To set in production:
+  ```bash
+  docker run -e JWT_SECRET=your-secret-here -e NODE_ENV=production ...
+  ```
+
+## 📁 Project Structure
+
+```
+src/
+├── app/
+│   ├── admin/              # Admin panel page
+│   └── api/
+│       ├── admin/          # Admin-only API routes (user management, settings)
+│       ├── auth/           # Authentication (login, logout, session)
+│       └── config/         # Public config API
+├── components/
+│   ├── admin/              # Admin panel UI components
+│   └── Settings/           # Settings dialog and sections
+├── lib/
+│   ├── hooks/useAuth.tsx   # Authentication context & hooks
+│   └── middleware/         # Auth middleware (requireAdmin, etc.)
+drizzle/                    # Database migrations
+```
+
+## 📝 User Management API
+
+Admin-only endpoints under `/api/admin/`:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/admin/users` | List all users |
+| `POST` | `/api/admin/users` | Create a new user |
+| `PUT` | `/api/admin/users/reset` | Reset a user's password |
+| `DELETE` | `/api/admin/users` | Delete a user |
+| `GET` | `/api/admin/settings` | Get admin-only settings |
+| `PUT` | `/api/admin/settings` | Update admin settings |
+
+## 🔄 Migrating from Single-User Vane
+
+Vane-MU uses a SQLite database (`data/vane.db`) managed by Drizzle ORM. On first launch, run migrations:
+
+```bash
+npm run db:migrate
+```
+
+Or let the Docker entrypoint handle it automatically.
+
+## 📄 License
+
+MIT — same as the original [Vane](https://github.com/ItzCrazyKns/Vane) project.
+
+## 🙏 Acknowledgements
+
+Vane-MU is built on the excellent work of the [Vane](https://github.com/ItzCrazyKns/Vane) project by ItzCrazyKns. This fork adds multi-user functionality while preserving the privacy-first, self-hosted philosophy of the original.
 
 ## Sponsors
 
 Vane's development is powered by the generous support of our sponsors. Their contributions help keep this project free, open-source, and accessible to everyone.
 
 <div align="center">
-  
-  
+
 <a href="https://www.warp.dev/perplexica">
   <img alt="Warp Terminal" src=".assets/sponsers/warp.png" width="100%">
 </a>
@@ -104,6 +265,20 @@ docker run -d -p 3000:3000 -e SEARXNG_API_URL=http://your-searxng-url:8080 -v va
 - Wolfram Alpha search engine enabled
 
 Replace `http://your-searxng-url:8080` with your actual SearxNG URL. Then configure your AI provider settings in the setup screen at http://localhost:3000.
+
+#### Using You.com as the Search Provider
+
+Instead of running a SearXNG instance, you can use the [You.com Search API](https://you.com/) as the web search backend:
+
+```bash
+docker run -d -p 3000:3000 \
+  -e SEARCH_PROVIDER=youcom \
+  -e YDC_API_KEY=your-youcom-api-key \
+  -v vane-data:/home/vane/data \
+  --name vane itzcrazykns1337/vane:slim-latest
+```
+
+You can also set `SEARCH_PROVIDER=youcom` and `YDC_API_KEY` in the Settings → Search section of the setup screen. When the provider is set to `youcom`, the main web search uses the You.com Search API; image, video, and news discovery still use SearXNG (they rely on SearXNG's engine-specific capabilities).
 
 #### Advanced Setup (Building from Source)
 
@@ -163,7 +338,7 @@ If you prefer to build from source or need more control:
 
 See the [installation documentation](https://github.com/ItzCrazyKns/Vane/tree/master/docs/installation) for more information like updating, etc.
 
-### Troubleshooting
+## Troubleshooting
 
 #### Local OpenAI-API-Compliant Servers
 
@@ -241,7 +416,6 @@ Vane runs on Next.js and handles all API requests. It works right away on the sa
 
 - [ ] Adding more widgets, integrations, search sources
 - [ ] Adding ability to create custom agents (name T.B.D.)
-- [ ] Adding authentication
 
 ## Support Us
 
@@ -257,7 +431,7 @@ We also accept donations to help sustain our project. If you would like to contr
 
 ## Contribution
 
-Vane is built on the idea that AI and large language models should be easy for everyone to use. If you find bugs or have ideas, please share them in via GitHub Issues. For more information on contributing to Vane you can read the [CONTRIBUTING.md](CONTRIBUTING.md) file to learn more about Vane and how you can contribute to it.
+Vane is built on the idea that AI and large language models should be easy for everyone to use. If you find bugs or have ideas, please share them in via GitHub Issues. For more information on contributing to Vane you can read the [CONTRIBUTING.md](CONTRIBUTING.md) file to learn more about Vane and how you can contribute.
 
 ## Help and Support
 

@@ -17,5 +17,23 @@ export const getSearxngURL = () =>
 export const getTavilyAPIKey = (): string =>
   configManager.getConfig('search.tavilyAPIKey', '');
 
-export const getSearchProvider = (): 'searxng' | 'tavily' =>
-  configManager.getConfig('search.searchProvider', 'searxng');
+export const getSearchProvider = (): 'searxng' | 'crw' | 'youcom' | 'tavily' => {
+  const provider = configManager.getConfig('search.searchProvider', 'searxng');
+  if (provider === 'crw') return 'crw';
+  if (provider === 'youcom') return 'youcom';
+  if (provider === 'tavily') return 'tavily';
+  return 'searxng';
+};
+
+export const getCrwURL = () =>
+  configManager.getConfig('search.crwURL', 'https://fastcrw.com/api');
+
+export const getCrwApiKey = () => configManager.getConfig('search.crwApiKey', '');
+
+export const getYoucomApiKey = (): string => {
+  return (
+    configManager.getConfig('search.youcomApiKey', '') ||
+    process.env.YDC_API_KEY ||
+    ''
+  );
+};
