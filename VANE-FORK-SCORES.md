@@ -10,7 +10,7 @@
 
 ---
 
-## Batch 2: PRs #27, #30, #37, #38, #39, #41, #45, #46, #49, #51
+## Batch 2: PRs #37, #38, #39, #41, #45, #46, #51
 
 ### 🔴 Critical Bug Fixes & Error Handling
 
@@ -22,46 +22,22 @@
 | pr/fix-openrouter-compatibility-1046 | 45 | 8.0 | Switches OpenAI provider to standard chat completions API for OpenRouter/LiteLLM compatibility, adds JSON fence stripping, null-safety for tool calls | ❌ **SCHWER** - 4 files: `openaiLLM.ts`, `ollamaLLM.ts`, `searxng.ts`, `webSearch.ts` | Needs manual review - overlaps with #49 (markdown fences) and #51 (null-safety) |
 | pr/pr-factory-issue-980-groq-tool-schema-1050 | 41 | 6.5 | Restores Groq structured-output using `json_object` + json-repair, removes redundant `type` from web_search schema | ✅ **KEINE** - Clean merge | Ready to merge |
 | pr/fix-strip-markdown-json-fences-1042 | 49 | 6.0 | Strips markdown code fences from LLM JSON responses in streamObject paths for OpenAI and Ollama | ❌ **MITTEL** - 2 files: `openaiLLM.ts`, `ollamaLLM.ts` | Can resolve - SUBSET of #45 which has more comprehensive JSON handling |
-| pr/fix-issue-997-include-raw-response-in-parse-errors-1090 | 27 | 5.5 | Includes raw LLM response in JSON parse error messages for debugging | ❌ **LEICHT** - 2 files: `openaiLLM.ts`, `ollamaLLM.ts` | Can resolve - simple additive change to error messages |
 
 ### 🔒 Security & SSRF Prevention
 
 | Branch | PR # | Score | Description | Merge Conflicts | Resolution Status |
 |---|---|---|---|---|---|
-| pr/pr-factory-issue-949-block-local-urls-1052 | 39 | 9.5 | **CRITICAL SECURITY** - Blocks localhost/private IP scraping, validates DNS results, rejects non-HTTP(S), limits redirects to 5 hops | ❌ **MITTEL** - 1 file: `src/lib/agents/search/researcher/actions/scrapeURL.ts` | Needs manual review - conflicts with #30's scraper changes (JSDOM vs Scraper class) |
+| pr/pr-factory-issue-949-block-local-urls-1052 | 39 | 9.5 | **CRITICAL SECURITY** - Blocks localhost/private IP scraping, validates DNS results, rejects non-HTTP(S), limits redirects to 5 hops | ❌ **MITTEL** - 1 file: `src/lib/agents/search/researcher/actions/scrapeURL.ts` | Needs manual review |
 
 ### 🟡 Features & Infrastructure
 
 | Branch | PR # | Score | Description | Merge Conflicts | Resolution Status |
 |---|---|---|---|---|---|
 | pr/master-1045 | 46 | 9.0 | **COMPREHENSIVE** - Standalone server startup script, server path resolution, multi-user auth scaffolding, Next.js standalone mode, 25 files changed | ❌ **SEHR SCHWER** - 15+ files: `next.config.mjs`, `package.json`, `package-lock.json`, `yarn.lock`, API routes, DB, searxng, etc. | Needs manual review - massive changeset, conflicts with many other PRs |
-| pr/feature-cleanup-html-page-to-reduce-token-usage-1073 | 30 | 5.0 | Cleans HTML with JSDOM before markdown conversion, removes scripts/styles/templates to reduce token usage | ❌ **MITTEL** - 3 files: `package.json`, `yarn.lock`, `scrapeURL.ts` | **LIKELY OBSOLETE** - integration has superior Scraper class with Readability |
 
 ---
 
 ## Detailed Conflict Analysis
-
-### PR #27 - Raw LLM Response in Errors (Score: 5.5)
-**Files:** `src/lib/models/providers/ollama/ollamaLLM.ts`, `src/lib/models/providers/openai/openaiLLM.ts`
-
-**Conflicts:**
-- `ollamaLLM.ts`: Integration added `extractJsonObject` utility, PR adds raw response to error messages
-- `openaiLLM.ts`: Integration has different error handling structure
-
-**Resolution:** Simple - preserve PR's raw response logging, adapt to integration's error structure
-
----
-
-### PR #30 - HTML Cleanup (Score: 5.0)
-**Files:** `package.json`, `yarn.lock`, `src/lib/agents/search/researcher/actions/scrapeURL.ts`
-
-**Conflicts:**
-- `scrapeURL.ts`: PR uses JSDOM + TurnDown, integration uses `Scraper` class with different approach
-- Package files: jsdom dependency vs integration's dependencies
-
-**Resolution:** ⚠️ **LIKELY REDUNDANT** - Integration's `Scraper` class already has HTML cleanup. Need to compare implementations.
-
----
 
 ### PR #37 - Search Pipeline Error Handling (Score: 9.0)
 **Files:** `src/lib/agents/search/api.ts`, `src/lib/agents/search/index.ts`
@@ -158,8 +134,7 @@
 
 ### Detected Redundant PRs:
 1. **PR #49 (Markdown fences) is REDUNDANT with PR #45** - #45 includes comprehensive JSON parsing with fence stripping
-2. **PR #30 (HTML cleanup) is LIKELY REDUNDANT** - Integration has superior Scraper class with Readability
-3. **PR #51 overlaps heavily with PR #45** - Both fix null-safety, error handling, searxng errors
+2. **PR #51 overlaps heavily with PR #45** - Both fix null-safety, error handling, searxng errors
 
 ### Recommended Primary PRs:
 - **PR #45** as primary for JSON/LLM provider fixes (includes #49)
@@ -176,13 +151,11 @@
 4. **PR #38** - Depends on #37
 5. **PR #45** - Comprehensive JSON/LLM fixes (absorbs #49)
 6. **PR #51** - Merge remaining robustness into #45
-7. **PR #27** - Simple error message enhancement
-8. **PR #46** - Major infrastructure, resolve last
-9. **PR #30** - Evaluate if still needed after integration review
-10. **PR #49** - Close as redundant with #45
+7. **PR #46** - Major infrastructure, resolve last
+8. **PR #49** - Close as redundant with #45
 
 ---
 
 *Analysis Date: 2026-07-24*
-*10 PRs analyzed: 1 ready (#41), 9 need conflict resolution*
-*3 likely redundant: #30, #49, and partial #51*
+*8 PRs analyzed: 1 ready (#41), 7 need conflict resolution*
+*2 likely redundant: #49 and partial #51*
