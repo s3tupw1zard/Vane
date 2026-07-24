@@ -22,9 +22,13 @@
 **Complexity:** 2/10 - Trivial parallel additions
 
 ### PR #13: SearXNG Similarity Fallback
-**Conflict:** Single file (`src/lib/agents/search/.../baseSearch.ts`) with overlapping embedding logic
-**Resolution:** Kept integration's batch embedding optimization, added PR's fallback logic for empty filter results
-**Complexity:** 4/10 - Semantic merge, both improvements compatible
+**Conflict:** Single file (`src/lib/agents/search/.../baseSearch.ts`) with You.com provider integration and mode transition structure
+**Resolution:** 
+- Accepted integration's You.com provider dispatcher (searchYoucom integration)
+- Preserved PR's detailed comment about external SearXNG instances and number_of_results edge case
+- Updated mode transition from `else if` to separate blocks for future extensibility
+- Maintained batch embedding optimization and fallback logic for similarity filter
+**Complexity:** 4/10 - Structural merge, preserved both PR's fix and integration's provider support
 
 ### PR #9: OpenRouter Streaming Fix
 **Conflict:** Single file (`src/lib/models/providers/openai/openaiLLM.ts`) with tool-call parsing differences
@@ -32,13 +36,14 @@
 **Complexity:** 6/10 - Localized to 2 methods, required understanding streaming logic
 
 ### PR #18: Multi-User Authentication & RBAC
-**Conflicts:** 4 files (README.md major, search/index.ts, openaiLLM.ts, yarn.lock)
+**Conflicts:** 1 file (`src/lib/agents/search/researcher/actions/search/baseSearch.ts`)
 **Resolution:** 
-- README: Manual merge preserving Vane-MU features, badges, sponsors, troubleshooting
-- search/index.ts: Accepted integration's clearer error messages
-- openaiLLM.ts: Accepted integration's .trim() safeguard
-- yarn.lock: Accepted integration version
-**Complexity:** 6/10 - README required careful manual merge, code conflicts trivial
+- Preserved PR's complete quality mode implementation with AI-powered search result picker and information extractor
+- Integrated similarity-based fallback from integration branch for external SearXNG instances (critical for production deployments)
+- Kept PR's embedding stripping optimization to prevent OOM errors when processing 60-70+ search results
+- Resolved structural conflict in executeSearch: merged PR's `else if` chain with integration's mode separation
+- Both speed/balanced and quality modes now have similarity fallback for robustness
+**Complexity:** 7/10 - Multiple conflict regions in critical search agent code, required preserving both PR's AI features and integration's optimizations
 
 ### PR #4: You.com Search Provider
 **Conflicts:** 3 files (baseSearch.ts, config/index.ts, serverRegistry.ts)
