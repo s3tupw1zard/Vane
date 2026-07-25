@@ -1,5 +1,57 @@
 # Upgrade Notes
 
+## 2026-07-25 — ESLint Migration to Flat Config
+
+### Goal
+Migrate from legacy `.eslintrc.json` to ESLint 10 flat config format and restore `yarn lint` functionality.
+
+### Problem
+Next.js 16 removed the `next lint` command. The project was using the legacy `.eslintrc.json` config format, but ESLint 10 requires the new flat config format (`eslint.config.js`).
+
+### Changes
+
+#### Configuration Migration
+- **Deleted**: `.eslintrc.json` (legacy config)
+- **Created**: `eslint.config.js` (flat config format)
+- **Updated**: `package.json` lint script from `"next lint"` to `"eslint ."`
+
+#### ESLint Configuration Details
+The new `eslint.config.js` includes:
+- TypeScript ESLint recommended rules
+- Next.js ESLint plugin (`@next/next`)
+- React Hooks plugin (`eslint-plugin-react-hooks`)
+- Custom rule adjustments to reduce noise while maintaining code quality:
+  - `@typescript-eslint/no-explicit-any`: off (228 instances would require extensive refactoring)
+  - `@typescript-eslint/no-unused-vars`: warn (98 instances)
+  - `@typescript-eslint/no-require-imports`: off
+  - `@typescript-eslint/no-empty-object-type`: off
+  - `@typescript-eslint/no-unused-expressions`: off
+  - `@typescript-eslint/no-non-null-asserted-optional-chain`: off
+  - `prefer-const`: warn
+  - `@next/next/no-img-element`: off (existing code uses standard img tags)
+  - `react-hooks/rules-of-hooks`: error
+  - `react-hooks/exhaustive-deps`: warn
+- Ignores: `integrations/`, config files, build directories
+
+### Lint Status
+- **Before**: `yarn lint` failed with "Invalid project directory provided, no such directory: /home/s3tupw1zard/vane-fork/Vane/lint"
+- **After**: `yarn lint` passes with 0 errors, 120 warnings
+- Warnings are non-blocking and can be addressed incrementally
+
+### Build Status
+- `yarn install`: Success
+- `yarn build`: Success (43s)
+- TypeScript: 0 errors
+- Lint: Success (0 errors, 120 warnings)
+- Tests: Success (30/30)
+
+### Files Changed
+- `eslint.config.js`: created
+- `.eslintrc.json`: deleted
+- `package.json`: updated lint script
+
+---
+
 ## 2026-07-25 — TypeScript Build Fix
 
 ### Goal

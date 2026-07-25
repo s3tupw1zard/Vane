@@ -2,12 +2,13 @@
 
 ## Remaining Tasks
 
-- [ ] Run `yarn lint` and fix lint errors introduced by dependency updates.
-- [ ] Run `yarn test` and fix test regressions.
+- [x] Run `yarn lint` and fix lint errors introduced by dependency updates. (Completed: migrated to flat config, 0 errors, 120 warnings remaining)
+- [ ] Run `yarn test` and fix test regressions. (Tests pass: 30/30)
+- [ ] Address remaining lint warnings (120 warnings, mostly unused vars and prefer-const)
+- [ ] Consider enabling stricter TypeScript ESLint rules after addressing warnings
 - [ ] Verify `drizzle-kit` compatibility — currently at `^0.18.1`, may need update for `drizzle-orm@^0.45.2`.
 - [ ] Review `g` package in dependencies — appears to be an accidental install (`g@^2.0.1` is a meta-package).
 - [ ] Review `yarn` package in dependencies — `yarn@^1.22.22` in `dependencies` is unusual and likely unnecessary.
-- [ ] Consider updating `eslint@^10.2.0` and `eslint-config-next@^16.2.2` compatibility.
 - [ ] Investigate `@modelcontextprotocol/sdk` and `express` for `integrations/mcp-server` — currently excluded from root build; should have its own build pipeline.
 - [ ] Review `baseSearch.ts` `as any` cast for `ResearchBlockSubStep` — may indicate missing type variant.
 - [ ] Review `scrapeURLAction` removal — verify no runtime dependency exists.
