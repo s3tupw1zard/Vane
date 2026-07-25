@@ -61,7 +61,7 @@ const socialSearchAction: ResearchAction<typeof schema> = {
 
     return {
       type: 'search_results',
-      results: deduplicateResults([...redditResults, ...xquikResults]),
+      results: deduplicateResults([...redditResults.results, ...xquikResults]),
     };
   },
 };

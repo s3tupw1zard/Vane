@@ -131,7 +131,7 @@ class MiniMaxAnthropicLLM extends BaseLLM<MiniMaxAnthropicConfig> {
 
       convertedMessages.push({
         role: message.role,
-        content: message.content,
+        content: message.content ?? '',
       });
     }
 

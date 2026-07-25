@@ -8,11 +8,15 @@ import { users, sessions } from '@/lib/db/schema';
 // Ensure JWT_SECRET is set in production
 const jwtSecretEnv = process.env.JWT_SECRET;
 if (!jwtSecretEnv) {
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE !== 'phase-production-build') {
     throw new Error('JWT_SECRET environment variable is required in production');
   }
-  // Only use fallback in development
-  console.warn('WARNING: Using fallback JWT_SECRET in development only. Set JWT_SECRET for production.');
+  // Only use fallback in development or during build
+  if (process.env.NODE_ENV === 'production') {
+    console.warn('WARNING: Using fallback JWT_SECRET during build. Set JWT_SECRET for production runtime.');
+  } else {
+    console.warn('WARNING: Using fallback JWT_SECRET in development only. Set JWT_SECRET for production.');
+  }
 }
 const JWT_SECRET = new TextEncoder().encode(
   jwtSecretEnv || 'vane-mu-secret-key-change-in-production-dev-only',

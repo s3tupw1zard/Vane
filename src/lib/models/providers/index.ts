@@ -28,7 +28,7 @@ export const getModelProvidersUIConfigSection =
   (): ModelProviderUISection[] => {
     return Object.entries(providers).map(([k, p]) => {
       const configFields = p.getProviderConfigFields();
-      const metadata = p.getProviderConfigFields();
+      const metadata = p.getProviderMetadata();
 
       return {
         fields: configFields,

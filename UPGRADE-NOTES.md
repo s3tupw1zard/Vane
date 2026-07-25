@@ -1,0 +1,68 @@
+# Upgrade Notes
+
+## 2026-07-25 — TypeScript Build Fix
+
+### Goal
+Make `yarn install`, `yarn build`, and TypeScript type checking complete successfully.
+
+### Changes
+
+#### Dependency / Build Configuration
+- **tsconfig.json**: Excluded `integrations/**` from root TypeScript compilation. The `integrations/mcp-server/` is a separate project with its own tsconfig and dependencies; it should not be compiled by the root project.
+- **src/lib/auth.ts**: Skip JWT_SECRET enforcement during `next build` phase by checking `NEXT_PHASE !== 'phase-production-build'`. The throw only fires at production runtime, not during build.
+
+#### Missing Imports
+- **src/app/api/chats/route.ts**: Added `messages` to the schema import (`chats, messages`).
+- **src/app/library/page.tsx**: Added `import DeleteAllChats from '@/components/DeleteAllChats'`.
+
+#### OpenAI Provider
+- **src/lib/models/providers/openai/openaiLLM.ts**:
+  - Changed `private convertToOpenAIMessages` to `protected` so subclasses (Groq, LMStudio, MiniMax) can access it.
+  - Coerced `message.content ?? ''` in the generic push path to handle `AssistantMessage.content: string | null`.
+  - Replaced `input.tools?.length > 0` with `input.tools && input.tools.length > 0` for proper type narrowing.
+  - Added `'function' in tc` guard for tool call access (new OpenAI SDK union type includes `ChatCompletionMessageCustomToolCall`).
+  - Fixed `openaiTools` initialization with `?? []` fallback for `input.tools?.map(...)`.
+  - Used `??` instead of `||` for optional `tc.function?.arguments`.
+
+#### Model Providers
+- **src/lib/models/providers/index.ts**: Fixed duplicate `getProviderConfigFields()` call — second call changed to `getProviderMetadata()`.
+- **src/lib/models/providers/minimax/minimaxAnthropicLLM.ts**: Coerced `message.content ?? ''`.
+- **src/lib/models/providers/ollama/ollamaLLM.ts**:
+  - Coerced `res.message.content ?? ''` in `generateText` return.
+  - Coerced `chunk.message.content ?? ''` in `streamObject`.
+  - Coerced `msg.content ?? ''` in `convertToOllamaMessages` for assistant messages.
+- **src/lib/models/providers/deepseek/deepseekEmbedding.ts**: Renamed `embedDocuments` → `embedText`, replaced `embedQuery` with `embedChunks` to match abstract base class.
+
+#### Minimax Casing Fix
+- Deleted duplicate `src/lib/models/providers/minimax/minimaxLLM.ts` (kept `miniMaxLLM.ts` which has full implementation).
+- Updated import in `minimax/index.ts` from `./minimaxLLM` to `./miniMaxLLM`.
+
+#### Search Agent
+- **src/lib/agents/search/classifier.ts**: Added `showCurrencyWidget: false` to `safeDefault`.
+- **src/lib/agents/search/researcher/actions/index.ts**: Removed `scrapeURLAction` registration (source file does not exist; import was already removed).
+- **src/lib/agents/search/researcher/actions/search/baseSearch.ts**:
+  - Added type assertion for `.reading` access on `ResearchBlockSubStep` union.
+  - Changed `type: 'results'` to `type: 'search_results'` with `reading: results` (cast `as any` since the type doesn't perfectly match).
+- **src/lib/agents/search/researcher/actions/search/academicSearch.ts**: Fixed `results: results` → `results: results.results`.
+- **src/lib/agents/search/researcher/actions/search/webSearch.ts**: Fixed `results: results` → `results: results.results`.
+- **src/lib/agents/search/researcher/actions/search/socialSearch.ts**: Fixed `[...redditResults, ...]` → `[...redditResults.results, ...]`.
+
+#### Test Files
+- **src/__tests__/db-migration.test.ts**:
+  - Added `import type { UserRole, AuthUser, SessionUser }` for type-only imports.
+  - Removed dynamic `await import()` for type-only exports.
+  - Added non-null assertions (`!`) after `find()` results (guarded by `toBeDefined()`).
+- **src/__tests__/middleware.test.ts**:
+  - Added `import type { UserRole }`.
+  - Used explicit `if (!result.success)` / `if (result.success)` narrowing instead of relying on `expect()` for discriminated union narrowing.
+  - Typed mock `role` as `UserRole` with `as UserRole`.
+
+### Build Status
+- `yarn install`: Success
+- `yarn build`: Success (44s)
+- TypeScript: 0 errors (was 53)
+- Lint: Not yet verified
+- Tests: Not yet verified
+
+### Files Changed
+20 files modified, 1 file deleted.

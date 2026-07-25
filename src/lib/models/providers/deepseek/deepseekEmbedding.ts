@@ -1,5 +1,6 @@
 import BaseEmbedding from '../../base/embedding';
 import OpenAI from 'openai';
+import { Chunk } from '@/lib/types';
 
 type DeepSeekEmbeddingConfig = {
   apiKey: string;
@@ -19,22 +20,17 @@ class DeepSeekEmbedding extends BaseEmbedding<DeepSeekEmbeddingConfig> {
     });
   }
 
-  async embedDocuments(documents: string[]): Promise<number[][]> {
+  async embedText(texts: string[]): Promise<number[][]> {
     const response = await this.deepseekClient.embeddings.create({
       model: this.config.model,
-      input: documents,
+      input: texts,
     });
 
     return response.data.map((item) => item.embedding);
   }
 
-  async embedQuery(document: string): Promise<number[]> {
-    const response = await this.deepseekClient.embeddings.create({
-      model: this.config.model,
-      input: [document],
-    });
-
-    return response.data[0].embedding;
+  async embedChunks(chunks: Chunk[]): Promise<number[][]> {
+    return this.embedText(chunks.map((c) => c.content));
   }
 }
 

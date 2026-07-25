@@ -113,7 +113,7 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
 
     return {
       type: 'search_results',
-      results: results,
+      results: results.results,
     };
   },
 };
