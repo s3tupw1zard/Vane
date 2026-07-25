@@ -141,6 +141,7 @@ class SearchAgent {
       input.config.systemInstructions,
       input.config.mode,
     );
+
     const answerStream = input.config.llm.streamText({
       messages: [
         {

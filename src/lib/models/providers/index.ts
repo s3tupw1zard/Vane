@@ -8,6 +8,8 @@ import GroqProvider from './groq';
 import LemonadeProvider from './lemonade';
 import AnthropicProvider from './anthropic';
 import LMStudioProvider from './lmstudio';
+import MiniMaxProvider from './minimax';
+import DeepSeekProvider from './deepseek';
 
 export const providers: Record<string, ProviderConstructor<any>> = {
   openai: OpenAIProvider,
@@ -18,13 +20,15 @@ export const providers: Record<string, ProviderConstructor<any>> = {
   lemonade: LemonadeProvider,
   anthropic: AnthropicProvider,
   lmstudio: LMStudioProvider,
+  minimax: MiniMaxProvider,
+  deepseek: DeepSeekProvider,
 };
 
 export const getModelProvidersUIConfigSection =
   (): ModelProviderUISection[] => {
     return Object.entries(providers).map(([k, p]) => {
       const configFields = p.getProviderConfigFields();
-      const metadata = p.getProviderMetadata();
+      const metadata = p.getProviderConfigFields();
 
       return {
         fields: configFields,
