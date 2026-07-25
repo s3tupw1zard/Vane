@@ -135,7 +135,15 @@ class Scraper {
         .catch(() => undefined);
       await page.waitForTimeout(500);
 
-      const html = await page.content();
+      let html = await page.content();
+
+      // Clean up HTML to reduce token usage
+      // remove comments and spaces
+      html = html
+        .replace(/<\!--[\s.]*?-->/gm, '') // comments
+        .replace(/^\s+|\s+$</gm, '')      // head and tail spaces
+        .replace(/\s+</gm, '<')           // spaces before tags
+        .replace(/>\s+/gm, '>')           // spaces after tags
 
       const dom = new JSDOM(html, {
         url,
