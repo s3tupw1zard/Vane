@@ -1,15 +1,17 @@
 import z from 'zod';
-import { ResearchAction } from '../../types';
-import { Chunk, SearchResultsResearchBlock } from '@/lib/types';
-import { searchSearxng } from '@/lib/searxng';
+import { ResearchAction } from '../../../types';
+import { Chunk, ResearchBlock } from '@/lib/types';
+import { executeSearch } from './baseSearch';
+import { isXquikEnabled, searchXquik } from '@/lib/xquik';
 
 const schema = z.object({
   queries: z.array(z.string()).describe('List of social search queries'),
 });
 
-const socialSearchDescription = `
+const getSocialSearchDescription = () => `
 Use this tool to perform social media searches for relevant posts, discussions, and trends related to the user's query. Provide a list of concise search queries that will help gather comprehensive social media information on the topic at hand.
 You can provide up to 3 queries at a time. Make sure the queries are specific and relevant to the user's needs.
+${isXquikEnabled() ? 'This tool searches both Reddit and X for broader social media coverage.' : 'This tool searches Reddit for social media discussions.'}
 
 For example, if the user is interested in public opinion on electric vehicles, your queries could be:
 1. "Electric vehicles public opinion 2024"
@@ -22,7 +24,7 @@ If this tool is present and no other tools are more relevant, you MUST use this 
 const socialSearchAction: ResearchAction<typeof schema> = {
   name: 'social_search',
   schema: schema,
-  getDescription: () => socialSearchDescription,
+  getDescription: getSocialSearchDescription,
   getToolDescription: () =>
     "Use this tool to perform social media searches for relevant posts, discussions, and trends related to the user's query. Provide a list of concise search queries that will help gather comprehensive social media information on the topic at hand.",
   enabled: (config) =>
@@ -30,100 +32,75 @@ const socialSearchAction: ResearchAction<typeof schema> = {
     config.classification.classification.skipSearch === false &&
     config.classification.classification.discussionSearch === true,
   execute: async (input, additionalConfig) => {
-    input.queries = input.queries.slice(0, 3);
+    input.queries = (
+      Array.isArray(input.queries) ? input.queries : [input.queries]
+    ).slice(0, 3);
 
     const researchBlock = additionalConfig.session.getBlock(
       additionalConfig.researchBlockId,
-    );
+    ) as ResearchBlock | undefined;
 
-    if (researchBlock && researchBlock.type === 'research') {
-      researchBlock.data.subSteps.push({
-        type: 'searching',
-        id: crypto.randomUUID(),
-        searching: input.queries,
-      });
+    if (!researchBlock) throw new Error('Failed to retrieve research block');
 
-      additionalConfig.session.updateBlock(additionalConfig.researchBlockId, [
-        {
-          op: 'replace',
-          path: '/data/subSteps',
-          value: researchBlock.data.subSteps,
+    const [redditResults, xquikResults] = await Promise.all([
+      executeSearch({
+        llm: additionalConfig.llm,
+        embedding: additionalConfig.embedding,
+        mode: additionalConfig.mode,
+        queries: input.queries,
+        researchBlock: researchBlock,
+        session: additionalConfig.session,
+        searchConfig: {
+          engines: ['reddit'],
         },
-      ]);
-    }
-
-    const searchResultsBlockId = crypto.randomUUID();
-    let searchResultsEmitted = false;
-
-    let results: Chunk[] = [];
-
-    const search = async (q: string) => {
-      const res = await searchSearxng(q, {
-        engines: ['reddit'],
-      });
-
-      const resultChunks: Chunk[] = res.results.map((r) => ({
-        content: r.content || r.title,
-        metadata: {
-          title: r.title,
-          url: r.url,
-        },
-      }));
-
-      results.push(...resultChunks);
-
-      if (
-        !searchResultsEmitted &&
-        researchBlock &&
-        researchBlock.type === 'research'
-      ) {
-        searchResultsEmitted = true;
-
-        researchBlock.data.subSteps.push({
-          id: searchResultsBlockId,
-          type: 'search_results',
-          reading: resultChunks,
-        });
-
-        additionalConfig.session.updateBlock(additionalConfig.researchBlockId, [
-          {
-            op: 'replace',
-            path: '/data/subSteps',
-            value: researchBlock.data.subSteps,
-          },
-        ]);
-      } else if (
-        searchResultsEmitted &&
-        researchBlock &&
-        researchBlock.type === 'research'
-      ) {
-        const subStepIndex = researchBlock.data.subSteps.findIndex(
-          (step) => step.id === searchResultsBlockId,
-        );
-
-        const subStep = researchBlock.data.subSteps[
-          subStepIndex
-        ] as SearchResultsResearchBlock;
-
-        subStep.reading.push(...resultChunks);
-
-        additionalConfig.session.updateBlock(additionalConfig.researchBlockId, [
-          {
-            op: 'replace',
-            path: '/data/subSteps',
-            value: researchBlock.data.subSteps,
-          },
-        ]);
-      }
-    };
-
-    await Promise.all(input.queries.map(search));
+        maxResultsPerQuery: additionalConfig.maxResultsPerQuery,
+        maxTotalResults: additionalConfig.maxTotalResults,
+      }),
+      searchXquikQueries(input.queries),
+    ]);
 
     return {
       type: 'search_results',
-      results,
+      results: deduplicateResults([...redditResults, ...xquikResults]),
     };
   },
+};
+
+const searchXquikQueries = async (queries: string[]): Promise<Chunk[]> => {
+  if (!isXquikEnabled()) return [];
+
+  const results = await Promise.all(
+    queries.map(async (query) => {
+      try {
+        return await searchXquik(query, 5);
+      } catch (err) {
+        console.error(
+          'Xquik social search failed:',
+          err instanceof Error ? err.message : 'Unknown error',
+        );
+        return [];
+      }
+    }),
+  );
+
+  return results.flat().map((result) => ({
+    content: result.content,
+    metadata: {
+      title: result.title,
+      url: result.url,
+    },
+  }));
+};
+
+const deduplicateResults = (results: Chunk[]): Chunk[] => {
+  const seenURLs = new Set<string>();
+
+  return results.filter((result) => {
+    const url = result.metadata.url;
+    if (typeof url !== 'string' || seenURLs.has(url)) return false;
+    seenURLs.add(url);
+    return true;
+  });
 };
 
 export default socialSearchAction;
