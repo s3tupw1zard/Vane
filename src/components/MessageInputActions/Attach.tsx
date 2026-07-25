@@ -21,7 +21,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
 const Attach = () => {
-  const { files, setFiles, setFileIds, fileIds } = useChat();
+  const { files, setFiles, setFileIds, fileIds, sendMessage } = useChat();
 
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<any>();
@@ -36,6 +36,32 @@ const Attach = () => {
     setLoading(true);
 
     try {
+      // Check if any image files are selected for vision-based search
+      let hasImage = false;
+      let imageFile: File | null = null;
+      for (let i = 0; i < selectedFiles.length; i++) {
+        if (selectedFiles[i].type.startsWith('image/')) {
+          hasImage = true;
+          imageFile = selectedFiles[i];
+          break;
+        }
+      }
+
+      // If image is selected, send to vision API and trigger search
+      if (hasImage && imageFile) {
+        const visionData = new FormData();
+        visionData.append('image', imageFile);
+        visionData.append('chat_model_provider_id', localStorage.getItem('chatModelProviderId') || '');
+        visionData.append('chat_model_key', localStorage.getItem('chatModelKey') || '');
+        const res = await fetch('/api/vision', { method: 'POST', body: visionData });
+        const resData = await res.json();
+        if (resData.query) {
+          sendMessage(`Search for information based on this image: ${resData.query}`);
+        }
+        setLoading(false);
+        return;
+      }
+
       const data = new FormData();
 
       for (let i = 0; i < selectedFiles.length; i++) {
@@ -123,7 +149,7 @@ const Attach = () => {
                           type="file"
                           onChange={handleChange}
                           ref={fileInputRef}
-                          accept=".pdf,.docx,.txt"
+                          accept=".pdf,.docx,.txt,image/*"
                           multiple
                           hidden
                         />
@@ -186,7 +212,7 @@ const Attach = () => {
         type="file"
         onChange={handleChange}
         ref={fileInputRef}
-        accept=".pdf,.docx,.txt"
+        accept=".pdf,.docx,.txt,image/*"
         multiple
         hidden
       />

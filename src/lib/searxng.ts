@@ -1,13 +1,14 @@
 import { getSearxngURL } from './config/serverRegistry';
 
-interface SearxngSearchOptions {
+export interface SearxngSearchOptions {
   categories?: string[];
   engines?: string[];
   language?: string;
   pageno?: number;
+  time_range?: string[];
 }
 
-interface SearxngSearchResult {
+export interface SearxngSearchResult {
   title: string;
   url: string;
   img_src?: string;
@@ -23,6 +24,12 @@ export const searchSearxng = async (
   opts?: SearxngSearchOptions,
 ) => {
   const searxngURL = getSearxngURL();
+
+  if (!searxngURL) {
+    throw new Error(
+      'SearXNG is not configured. Please set the SearXNG URL in Settings → Search.',
+    );
+  }
 
   const url = new URL(`${searxngURL}/search?format=json`);
   url.searchParams.append('q', query);
@@ -44,6 +51,13 @@ export const searchSearxng = async (
   try {
     const res = await fetch(url, {
       signal: controller.signal,
+      headers: {
+        // SearXNG's default botdetection rejects requests that do not identify
+        // an origin IP. Server-side searches from Vane do not have a browser
+        // proxy adding these headers, so provide a loopback address explicitly.
+        'X-Forwarded-For': '127.0.0.1',
+        'X-Real-IP': '127.0.0.1',
+      },
     });
 
     if (!res.ok) {
@@ -52,8 +66,8 @@ export const searchSearxng = async (
 
     const data = await res.json();
 
-    const results: SearxngSearchResult[] = data.results;
-    const suggestions: string[] = data.suggestions;
+    const results: SearxngSearchResult[] = data.results ?? [];
+    const suggestions: string[] = data.suggestions ?? [];
 
     return { results, suggestions };
   } catch (err: any) {
