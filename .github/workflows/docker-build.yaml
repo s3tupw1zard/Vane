@@ -20,12 +20,10 @@ jobs:
             dockerfile: Dockerfile.slim
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
-        with:
-          install: true
 
       - name: Log in to DockerHub
         uses: docker/login-action@v4
@@ -33,10 +31,17 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Extract version from release tag
         if: github.event_name == 'release'
         id: version
-        run: echo "RELEASE_VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
       - name: Build and push AMD64 Docker image (master)
         if: github.ref == 'refs/heads/master' && github.event_name == 'push'
@@ -44,11 +49,12 @@ jobs:
           DOCKERFILE=${{ matrix.variant.dockerfile }}
           VARIANT=${{ matrix.variant.name }}
           docker buildx build --platform linux/amd64 \
-            --cache-from=type=registry,ref=itzcrazykns1337/vane:${VARIANT}-amd64 \
-            --cache-to=type=inline \
+            --cache-from=type=registry,ref=ghcr.io/s3tupw1zard/vane:${VARIANT}-amd64-cache \
+            --cache-to=type=registry,ref=ghcr.io/s3tupw1zard/vane:${VARIANT}-amd64-cache,mode=max \
             --provenance false \
             -f $DOCKERFILE \
-            -t itzcrazykns1337/vane:${VARIANT}-amd64 \
+            -t s3tupw1zard/vane:${VARIANT}-amd64 \
+            -t ghcr.io/s3tupw1zard/vane:${VARIANT}-amd64 \
             --push .
 
       - name: Build and push AMD64 Canary Docker image
@@ -57,24 +63,40 @@ jobs:
           DOCKERFILE=${{ matrix.variant.dockerfile }}
           VARIANT=${{ matrix.variant.name }}
           docker buildx build --platform linux/amd64 \
-            --cache-from=type=registry,ref=itzcrazykns1337/vane:${VARIANT}-canary-amd64 \
-            --cache-to=type=inline \
+            --cache-from=type=registry,ref=ghcr.io/s3tupw1zard/vane:${VARIANT}-canary-amd64-cache \
+            --cache-to=type=registry,ref=ghcr.io/s3tupw1zard/vane:${VARIANT}-canary-amd64-cache,mode=max \
             --provenance false \
             -f $DOCKERFILE \
-            -t itzcrazykns1337/vane:${VARIANT}-canary-amd64 \
+            -t s3tupw1zard/vane:${VARIANT}-canary-amd64 \
+            -t ghcr.io/s3tupw1zard/vane:${VARIANT}-canary-amd64 \
             --push .
 
       - name: Build and push AMD64 release Docker image
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' && github.event.release.prerelease == false
         run: |
           DOCKERFILE=${{ matrix.variant.dockerfile }}
           VARIANT=${{ matrix.variant.name }}
           docker buildx build --platform linux/amd64 \
-            --cache-from=type=registry,ref=itzcrazykns1337/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-amd64 \
-            --cache-to=type=inline \
+            --cache-from=type=registry,ref=ghcr.io/s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-amd64-cache \
+            --cache-to=type=registry,ref=ghcr.io/s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-amd64-cache,mode=max \
             --provenance false \
             -f $DOCKERFILE \
-            -t itzcrazykns1337/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-amd64 \
+            -t s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-amd64 \
+            -t ghcr.io/s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-amd64 \
+            --push .
+
+      - name: Build and push AMD64 pre-release Docker image
+        if: github.event_name == 'release' && github.event.release.prerelease == true
+        run: |
+          DOCKERFILE=${{ matrix.variant.dockerfile }}
+          VARIANT=${{ matrix.variant.name }}
+          docker buildx build --platform linux/amd64 \
+            --cache-from=type=registry,ref=ghcr.io/s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-pre-amd64-cache \
+            --cache-to=type=registry,ref=ghcr.io/s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-pre-amd64-cache,mode=max \
+            --provenance false \
+            -f $DOCKERFILE \
+            -t s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-pre-amd64 \
+            -t ghcr.io/s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-pre-amd64 \
             --push .
 
   build-arm64:
@@ -88,12 +110,10 @@ jobs:
             dockerfile: Dockerfile.slim
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
-        with:
-          install: true
 
       - name: Log in to DockerHub
         uses: docker/login-action@v4
@@ -101,10 +121,17 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Extract version from release tag
         if: github.event_name == 'release'
         id: version
-        run: echo "RELEASE_VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
       - name: Build and push ARM64 Docker image (master)
         if: github.ref == 'refs/heads/master' && github.event_name == 'push'
@@ -112,11 +139,12 @@ jobs:
           DOCKERFILE=${{ matrix.variant.dockerfile }}
           VARIANT=${{ matrix.variant.name }}
           docker buildx build --platform linux/arm64 \
-            --cache-from=type=registry,ref=itzcrazykns1337/vane:${VARIANT}-arm64 \
-            --cache-to=type=inline \
+            --cache-from=type=registry,ref=ghcr.io/s3tupw1zard/vane:${VARIANT}-arm64-cache \
+            --cache-to=type=registry,ref=ghcr.io/s3tupw1zard/vane:${VARIANT}-arm64-cache,mode=max \
             --provenance false \
             -f $DOCKERFILE \
-            -t itzcrazykns1337/vane:${VARIANT}-arm64 \
+            -t s3tupw1zard/vane:${VARIANT}-arm64 \
+            -t ghcr.io/s3tupw1zard/vane:${VARIANT}-arm64 \
             --push .
 
       - name: Build and push ARM64 Canary Docker image
@@ -125,24 +153,40 @@ jobs:
           DOCKERFILE=${{ matrix.variant.dockerfile }}
           VARIANT=${{ matrix.variant.name }}
           docker buildx build --platform linux/arm64 \
-            --cache-from=type=registry,ref=itzcrazykns1337/vane:${VARIANT}-canary-arm64 \
-            --cache-to=type=inline \
+            --cache-from=type=registry,ref=ghcr.io/s3tupw1zard/vane:${VARIANT}-canary-arm64-cache \
+            --cache-to=type=registry,ref=ghcr.io/s3tupw1zard/vane:${VARIANT}-canary-arm64-cache,mode=max \
             --provenance false \
             -f $DOCKERFILE \
-            -t itzcrazykns1337/vane:${VARIANT}-canary-arm64 \
+            -t s3tupw1zard/vane:${VARIANT}-canary-arm64 \
+            -t ghcr.io/s3tupw1zard/vane:${VARIANT}-canary-arm64 \
             --push .
 
       - name: Build and push ARM64 release Docker image
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' && github.event.release.prerelease == false
         run: |
           DOCKERFILE=${{ matrix.variant.dockerfile }}
           VARIANT=${{ matrix.variant.name }}
           docker buildx build --platform linux/arm64 \
-            --cache-from=type=registry,ref=itzcrazykns1337/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-arm64 \
-            --cache-to=type=inline \
+            --cache-from=type=registry,ref=ghcr.io/s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-arm64-cache \
+            --cache-to=type=registry,ref=ghcr.io/s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-arm64-cache,mode=max \
             --provenance false \
             -f $DOCKERFILE \
-            -t itzcrazykns1337/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-arm64 \
+            -t s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-arm64 \
+            -t ghcr.io/s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-arm64 \
+            --push .
+
+      - name: Build and push ARM64 pre-release Docker image
+        if: github.event_name == 'release' && github.event.release.prerelease == true
+        run: |
+          DOCKERFILE=${{ matrix.variant.dockerfile }}
+          VARIANT=${{ matrix.variant.name }}
+          docker buildx build --platform linux/arm64 \
+            --cache-from=type=registry,ref=ghcr.io/s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-pre-arm64-cache \
+            --cache-to=type=registry,ref=ghcr.io/s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-pre-arm64-cache,mode=max \
+            --provenance false \
+            -f $DOCKERFILE \
+            -t s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-pre-arm64 \
+            -t ghcr.io/s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-pre-arm64 \
             --push .
 
   manifest:
@@ -158,60 +202,132 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Extract version from release tag
         if: github.event_name == 'release'
         id: version
-        run: echo "RELEASE_VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
       - name: Create and push manifest for main
         if: github.ref == 'refs/heads/master' && github.event_name == 'push'
         run: |
           VARIANT=${{ matrix.variant }}
-          docker manifest create itzcrazykns1337/vane:${VARIANT}-latest \
-            --amend itzcrazykns1337/vane:${VARIANT}-amd64 \
-            --amend itzcrazykns1337/vane:${VARIANT}-arm64
-          docker manifest push itzcrazykns1337/vane:${VARIANT}-latest
+
+          docker manifest create s3tupw1zard/vane:${VARIANT}-latest \
+            --amend s3tupw1zard/vane:${VARIANT}-amd64 \
+            --amend s3tupw1zard/vane:${VARIANT}-arm64
+          docker manifest push s3tupw1zard/vane:${VARIANT}-latest
+
+          docker manifest create ghcr.io/s3tupw1zard/vane:${VARIANT}-latest \
+            --amend ghcr.io/s3tupw1zard/vane:${VARIANT}-amd64 \
+            --amend ghcr.io/s3tupw1zard/vane:${VARIANT}-arm64
+          docker manifest push ghcr.io/s3tupw1zard/vane:${VARIANT}-latest
 
           if [ "$VARIANT" = "full" ]; then
-            docker manifest create itzcrazykns1337/vane:latest \
-              --amend itzcrazykns1337/vane:${VARIANT}-amd64 \
-              --amend itzcrazykns1337/vane:${VARIANT}-arm64
-            docker manifest push itzcrazykns1337/vane:latest
+            docker manifest create s3tupw1zard/vane:latest \
+              --amend s3tupw1zard/vane:${VARIANT}-amd64 \
+              --amend s3tupw1zard/vane:${VARIANT}-arm64
+            docker manifest push s3tupw1zard/vane:latest
 
-            docker manifest create itzcrazykns1337/vane:main \
-              --amend itzcrazykns1337/vane:${VARIANT}-amd64 \
-              --amend itzcrazykns1337/vane:${VARIANT}-arm64
-            docker manifest push itzcrazykns1337/vane:main
+            docker manifest create ghcr.io/s3tupw1zard/vane:latest \
+              --amend ghcr.io/s3tupw1zard/vane:${VARIANT}-amd64 \
+              --amend ghcr.io/s3tupw1zard/vane:${VARIANT}-arm64
+            docker manifest push ghcr.io/s3tupw1zard/vane:latest
+
+            docker manifest create s3tupw1zard/vane:main \
+              --amend s3tupw1zard/vane:${VARIANT}-amd64 \
+              --amend s3tupw1zard/vane:${VARIANT}-arm64
+            docker manifest push s3tupw1zard/vane:main
+
+            docker manifest create ghcr.io/s3tupw1zard/vane:main \
+              --amend ghcr.io/s3tupw1zard/vane:${VARIANT}-amd64 \
+              --amend ghcr.io/s3tupw1zard/vane:${VARIANT}-arm64
+            docker manifest push ghcr.io/s3tupw1zard/vane:main
           fi
 
       - name: Create and push manifest for canary
         if: github.ref == 'refs/heads/canary' && github.event_name == 'push'
         run: |
           VARIANT=${{ matrix.variant }}
-          docker manifest create itzcrazykns1337/vane:${VARIANT}-canary \
-            --amend itzcrazykns1337/vane:${VARIANT}-canary-amd64 \
-            --amend itzcrazykns1337/vane:${VARIANT}-canary-arm64
-          docker manifest push itzcrazykns1337/vane:${VARIANT}-canary
+
+          docker manifest create s3tupw1zard/vane:${VARIANT}-canary \
+            --amend s3tupw1zard/vane:${VARIANT}-canary-amd64 \
+            --amend s3tupw1zard/vane:${VARIANT}-canary-arm64
+          docker manifest push s3tupw1zard/vane:${VARIANT}-canary
+
+          docker manifest create ghcr.io/s3tupw1zard/vane:${VARIANT}-canary \
+            --amend ghcr.io/s3tupw1zard/vane:${VARIANT}-canary-amd64 \
+            --amend ghcr.io/s3tupw1zard/vane:${VARIANT}-canary-arm64
+          docker manifest push ghcr.io/s3tupw1zard/vane:${VARIANT}-canary
 
           if [ "$VARIANT" = "full" ]; then
-            docker manifest create itzcrazykns1337/vane:canary \
-              --amend itzcrazykns1337/vane:${VARIANT}-canary-amd64 \
-              --amend itzcrazykns1337/vane:${VARIANT}-canary-arm64
-            docker manifest push itzcrazykns1337/vane:canary
+            docker manifest create s3tupw1zard/vane:canary \
+              --amend s3tupw1zard/vane:${VARIANT}-canary-amd64 \
+              --amend s3tupw1zard/vane:${VARIANT}-canary-arm64
+            docker manifest push s3tupw1zard/vane:canary
+
+            docker manifest create ghcr.io/s3tupw1zard/vane:canary \
+              --amend ghcr.io/s3tupw1zard/vane:${VARIANT}-canary-amd64 \
+              --amend ghcr.io/s3tupw1zard/vane:${VARIANT}-canary-arm64
+            docker manifest push ghcr.io/s3tupw1zard/vane:canary
           fi
 
       - name: Create and push manifest for releases
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' && github.event.release.prerelease == false
         run: |
           VARIANT=${{ matrix.variant }}
-          docker manifest create itzcrazykns1337/vane:${VARIANT}-${{ env.RELEASE_VERSION }} \
-            --amend itzcrazykns1337/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-amd64 \
-            --amend itzcrazykns1337/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-arm64
-          docker manifest push itzcrazykns1337/vane:${VARIANT}-${{ env.RELEASE_VERSION }}
+
+          docker manifest create s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }} \
+            --amend s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-amd64 \
+            --amend s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-arm64
+          docker manifest push s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}
+
+          docker manifest create ghcr.io/s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }} \
+            --amend ghcr.io/s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-amd64 \
+            --amend ghcr.io/s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-arm64
+          docker manifest push ghcr.io/s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}
 
           if [ "$VARIANT" = "full" ]; then
-            docker manifest create itzcrazykns1337/vane:${{ env.RELEASE_VERSION }} \
-              --amend itzcrazykns1337/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-amd64 \
-              --amend itzcrazykns1337/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-arm64
-            docker manifest push itzcrazykns1337/vane:${{ env.RELEASE_VERSION }}
+            docker manifest create s3tupw1zard/vane:${{ env.RELEASE_VERSION }} \
+              --amend s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-amd64 \
+              --amend s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-arm64
+            docker manifest push s3tupw1zard/vane:${{ env.RELEASE_VERSION }}
+
+            docker manifest create ghcr.io/s3tupw1zard/vane:${{ env.RELEASE_VERSION }} \
+              --amend ghcr.io/s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-amd64 \
+              --amend ghcr.io/s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-arm64
+            docker manifest push ghcr.io/s3tupw1zard/vane:${{ env.RELEASE_VERSION }}
+          fi
+
+      - name: Create and push manifest for pre-releases
+        if: github.event_name == 'release' && github.event.release.prerelease == true
+        run: |
+          VARIANT=${{ matrix.variant }}
+
+          docker manifest create s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-pre \
+            --amend s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-pre-amd64 \
+            --amend s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-pre-arm64
+          docker manifest push s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-pre
+
+          docker manifest create ghcr.io/s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-pre \
+            --amend ghcr.io/s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-pre-amd64 \
+            --amend ghcr.io/s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-pre-arm64
+          docker manifest push ghcr.io/s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-pre
+
+          if [ "$VARIANT" = "full" ]; then
+            docker manifest create s3tupw1zard/vane:${{ env.RELEASE_VERSION }}-pre \
+              --amend s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-pre-amd64 \
+              --amend s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-pre-arm64
+            docker manifest push s3tupw1zard/vane:${{ env.RELEASE_VERSION }}-pre
+
+            docker manifest create ghcr.io/s3tupw1zard/vane:${{ env.RELEASE_VERSION }}-pre \
+              --amend ghcr.io/s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-pre-amd64 \
+              --amend ghcr.io/s3tupw1zard/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-pre-arm64
+            docker manifest push ghcr.io/s3tupw1zard/vane:${{ env.RELEASE_VERSION }}-pre
           fi
