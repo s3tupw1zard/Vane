@@ -11,7 +11,7 @@ import { Ollama, Tool as OllamaTool, Message as OllamaMessage } from 'ollama';
 import { parse } from 'partial-json';
 import crypto from 'crypto';
 import { Message } from '@/lib/types';
-import { repairJson } from '@toolsycc/json-repair';
+import { extractJsonObject } from '@/lib/utils/extractJson';
 
 type OllamaConfig = {
   baseURL: string;
@@ -19,13 +19,20 @@ type OllamaConfig = {
   options?: GenerateOptions;
 };
 
+const DEFAULT_OLLAMA_NUM_CTX = 32000;
+const numCtx = process.env.OLLAMA_NUM_CTX
+  ? parseInt(process.env.OLLAMA_NUM_CTX, 10)
+  : DEFAULT_OLLAMA_NUM_CTX;
+
 const reasoningModels = [
   'gpt-oss',
   'deepseek-r1',
   'qwen3',
   'deepseek-v3.1',
   'magistral',
-  'nemotron-3-nano',
+  'nemotron-3',
+  'nemotron-cascade-2',
+  'glm-4.7-flash',
 ];
 
 class OllamaLLM extends BaseLLM<OllamaConfig> {
@@ -92,7 +99,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
         temperature:
           input.options?.temperature ?? this.config.options?.temperature ?? 0.7,
         num_predict: input.options?.maxTokens ?? this.config.options?.maxTokens,
-        num_ctx: 32000,
+        num_ctx: numCtx,
         frequency_penalty:
           input.options?.frequencyPenalty ??
           this.config.options?.frequencyPenalty,
@@ -146,7 +153,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
         top_p: input.options?.topP ?? this.config.options?.topP,
         temperature:
           input.options?.temperature ?? this.config.options?.temperature ?? 0.7,
-        num_ctx: 32000,
+        num_ctx: numCtx,
         num_predict: input.options?.maxTokens ?? this.config.options?.maxTokens,
         frequency_penalty:
           input.options?.frequencyPenalty ??
@@ -193,6 +200,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
         top_p: input.options?.topP ?? this.config.options?.topP,
         temperature:
           input.options?.temperature ?? this.config.options?.temperature ?? 0.7,
+        num_ctx: numCtx,
         num_predict: input.options?.maxTokens ?? this.config.options?.maxTokens,
         frequency_penalty:
           input.options?.frequencyPenalty ??
@@ -205,16 +213,12 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       },
     });
 
+    const raw = response.message.content ?? '';
     try {
-      return input.schema.parse(
-        JSON.parse(
-          repairJson(response.message.content, {
-            extractJson: true,
-          }) as string,
-        ),
-      ) as T;
+      return input.schema.parse(JSON.parse(extractJsonObject(raw))) as T;
     } catch (err) {
-      throw new Error(`Error parsing response from Ollama: ${err}`);
+      // Keep raw content in the error so parse failures are debuggable.
+      throw new Error(`Error parsing response from Ollama: ${err}\nraw=${raw}`);
     }
   }
 
@@ -233,6 +237,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
         top_p: input.options?.topP ?? this.config.options?.topP,
         temperature:
           input.options?.temperature ?? this.config.options?.temperature ?? 0.7,
+        num_ctx: numCtx,
         num_predict: input.options?.maxTokens ?? this.config.options?.maxTokens,
         frequency_penalty:
           input.options?.frequencyPenalty ??

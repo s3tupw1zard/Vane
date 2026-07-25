@@ -7,6 +7,17 @@ import { WidgetExecutor } from './widgets';
 
 class APISearchAgent {
   async searchAsync(session: SessionManager, input: SearchAgentInput) {
+    try {
+      await this._searchAsync(session, input);
+    } catch (err) {
+      console.error('[APISearchAgent] Fatal error in searchAsync:', err);
+      session.emit('error', {
+        data: err instanceof Error ? err.message : 'An error occurred while processing your request.',
+      });
+    }
+  }
+
+  private async _searchAsync(session: SessionManager, input: SearchAgentInput) {
     const classification = await classify({
       chatHistory: input.chatHistory,
       enabledSources: input.config.sources,
@@ -19,6 +30,9 @@ class APISearchAgent {
       chatHistory: input.chatHistory,
       followUp: input.followUp,
       llm: input.config.llm,
+    }).catch((err) => {
+      console.error(`Error executing widgets: ${err}`);
+      return [];
     });
 
     let searchPromise: Promise<ResearcherOutput> | null = null;

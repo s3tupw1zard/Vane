@@ -4,11 +4,13 @@ import {
   BrainCog,
   ChevronLeft,
   ExternalLink,
+  Key,
   Search,
   Sliders,
   ToggleRight,
 } from 'lucide-react';
 import Preferences from './Sections/Preferences';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -18,6 +20,7 @@ import Models from './Sections/Models/Section';
 import SearchSection from './Sections/Search';
 import Select from '@/components/ui/Select';
 import Personalization from './Sections/Personalization';
+import ChangePassword from './Sections/ChangePassword';
 
 const sections = [
   {
@@ -35,6 +38,14 @@ const sections = [
     icon: ToggleRight,
     component: Personalization,
     dataAdd: 'personalization',
+  },
+  {
+    key: 'security',
+    name: 'Change Password',
+    description: 'Update your account password.',
+    icon: Key,
+    component: ChangePassword,
+    dataAdd: 'security',
   },
   {
     key: 'models',
@@ -61,13 +72,19 @@ const SettingsDialogue = ({
   isOpen: boolean;
   setIsOpen: (active: boolean) => void;
 }) => {
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [config, setConfig] = useState<any>(null);
-  const [activeSection, setActiveSection] = useState<string>(sections[0].key);
-  const [selectedSection, setSelectedSection] = useState(sections[0]);
+  const visibleSections = sections.filter(
+    (s) => s.key === 'models' || s.key === 'search' ? user?.role === 'admin' : true,
+  );
+  const [activeSection, setActiveSection] = useState<string>(
+    visibleSections[0]?.key ?? 'preferences',
+  );
+  const [selectedSection, setSelectedSection] = useState(visibleSections[0]);
 
   useEffect(() => {
-    setSelectedSection(sections.find((s) => s.key === activeSection)!);
+    setSelectedSection(visibleSections.find((s) => s.key === activeSection) || visibleSections[0]);
   }, [activeSection]);
 
   useEffect(() => {
@@ -132,7 +149,7 @@ const SettingsDialogue = ({
                   </button>
 
                   <div className="flex flex-col items-start space-y-1 mt-8">
-                    {sections.map((section) => (
+                    {visibleSections.map((section) => (
                       <button
                         key={section.dataAdd}
                         className={cn(
@@ -154,7 +171,7 @@ const SettingsDialogue = ({
                     Version: {process.env.NEXT_PUBLIC_VERSION}
                   </p>
                   <a
-                    href="https://github.com/itzcrazykns/perplexica"
+                    href="https://github.com/itzcrazykns/vane"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs text-black/70 dark:text-white/70 flex flex-row space-x-1 items-center transition duration-200 hover:text-black/90 hover:dark:text-white/90"
@@ -176,7 +193,7 @@ const SettingsDialogue = ({
                     />
                   </button>
                   <Select
-                    options={sections.map((section) => {
+                    options={visibleSections.map((section) => {
                       return {
                         value: section.key,
                         key: section.key,

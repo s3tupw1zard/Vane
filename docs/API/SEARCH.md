@@ -1,8 +1,29 @@
-# Perplexica Search API Documentation
+# Vane Search API Documentation
 
 ## Overview
 
-Perplexica’s Search API makes it easy to use our AI-powered search engine. You can run different types of searches, pick the models you want to use, and get the most recent info. Follow the following headings to learn more about Perplexica's search API.
+Vane's Search API makes it easy to use our AI-powered search engine. You can run different types of searches, pick the models you want to use, and get the most recent info. Follow the following headings to learn more about Vane's search API.
+
+## ⚠️ Migration Guide
+
+### v1.12.1: `focusMode` replaced by `sources`
+
+The `focusMode` parameter has been removed from all API endpoints and replaced with `sources`.
+
+| Before (v1.12.0 and earlier) | After (v1.12.1+) |
+|------------------------------|-------------------|
+| `"focusMode": "webSearch"` | `"sources": ["web"]` |
+| `"focusMode": "academicSearch"` | `"sources": ["academic"]` |
+
+> **⚠️ Breaking change in v1.12.1:** The `focusMode` parameter has been removed.
+> Replace `focusMode: "webSearch"` with `sources: ["web"]` in all integrations.
+>
+> **Behaviour by endpoint:**
+> - `/api/chat` — `focusMode` is stripped by Zod schema validation and `sources`
+>   defaults to `[]`. No error is returned, but no sources are searched. Queries
+>   appear to work but return LLM-only answers with no web data.
+> - `/api/search` — `focusMode` is not accepted. Sending `focusMode` without `sources`
+>   returns **HTTP 400** `Missing sources or query`.
 
 ## Endpoints
 
@@ -53,7 +74,7 @@ Use the `id` field as the `providerId` and the `key` field from the models array
 
 **Full URL**: `http://localhost:3000/api/search`
 
-**Note**: Replace `localhost:3000` with your Perplexica instance URL if running on a different host or port
+**Note**: Replace `localhost:3000` with your Vane instance URL if running on a different host or port
 
 ### Request
 
@@ -73,12 +94,12 @@ The API accepts a JSON object in the request body, where you define the enabled 
   },
   "optimizationMode": "speed",
   "sources": ["web"],
-  "query": "What is Perplexica",
+  "query": "What is Vane",
   "history": [
     ["human", "Hi, how are you?"],
     ["assistant", "I am doing well, how can I help you today?"]
   ],
-  "systemInstructions": "Focus on providing technical details about Perplexica's architecture.",
+  "systemInstructions": "Focus on providing technical details about Vane's architecture.",
   "stream": false
 }
 ```
@@ -115,8 +136,8 @@ The API accepts a JSON object in the request body, where you define the enabled 
 
   ```json
   [
-    ["human", "What is Perplexica?"],
-    ["assistant", "Perplexica is an AI-powered search engine..."]
+    ["human", "What is Vane?"],
+    ["assistant", "Vane is an AI-powered search engine..."]
   ]
   ```
 
@@ -130,20 +151,20 @@ The response from the API includes both the final message and the sources used t
 
 ```json
 {
-  "message": "Perplexica is an innovative, open-source AI-powered search engine designed to enhance the way users search for information online. Here are some key features and characteristics of Perplexica:\n\n- **AI-Powered Technology**: It utilizes advanced machine learning algorithms to not only retrieve information but also to understand the context and intent behind user queries, providing more relevant results [1][5].\n\n- **Open-Source**: Being open-source, Perplexica offers flexibility and transparency, allowing users to explore its functionalities without the constraints of proprietary software [3][10].",
+  "message": "Vane is an innovative, open-source AI-powered search engine designed to enhance the way users search for information online. Here are some key features and characteristics of Vane:\n\n- **AI-Powered Technology**: It utilizes advanced machine learning algorithms to not only retrieve information but also to understand the context and intent behind user queries, providing more relevant results [1][5].\n\n- **Open-Source**: Being open-source, Vane offers flexibility and transparency, allowing users to explore its functionalities without the constraints of proprietary software [3][10].",
   "sources": [
     {
-      "content": "Perplexica is an innovative, open-source AI-powered search engine designed to enhance the way users search for information online.",
+      "content": "Vane is an innovative, open-source AI-powered search engine designed to enhance the way users search for information online.",
       "metadata": {
-        "title": "What is Perplexica, and how does it function as an AI-powered search ...",
-        "url": "https://askai.glarity.app/search/What-is-Perplexica--and-how-does-it-function-as-an-AI-powered-search-engine"
+        "title": "What is Vane, and how does it function as an AI-powered search ...",
+        "url": "https://askai.glarity.app/search/What-is-Vane--and-how-does-it-function-as-an-AI-powered-search-engine"
       }
     },
     {
-      "content": "Perplexica is an open-source AI-powered search tool that dives deep into the internet to find precise answers.",
+      "content": "Vane is an open-source AI-powered search tool that dives deep into the internet to find precise answers.",
       "metadata": {
         "title": "Sahar Mor's Post",
-        "url": "https://www.linkedin.com/posts/sahar-mor_a-new-open-source-project-called-perplexica-activity-7204489745668694016-ncja"
+        "url": "https://www.linkedin.com/posts/sahar-mor_a-new-open-source-project-called-vane-activity-7204489745668694016-ncja"
       }
     }
         ....
@@ -160,7 +181,7 @@ Example of streamed response objects:
 ```
 {"type":"init","data":"Stream connected"}
 {"type":"sources","data":[{"content":"...","metadata":{"title":"...","url":"..."}},...]}
-{"type":"response","data":"Perplexica is an "}
+{"type":"response","data":"Vane is an "}
 {"type":"response","data":"innovative, open-source "}
 {"type":"response","data":"AI-powered search engine..."}
 {"type":"done"}
@@ -188,3 +209,72 @@ If an error occurs during the search process, the API will return an appropriate
 
 - **400**: If the request is malformed or missing required fields (e.g., no `sources` or `query`).
 - **500**: If an internal server error occurs during the search.
+
+---
+
+## Internal Chat API
+
+The `/api/chat` endpoint is the internal streaming API used by Perplexica's frontend. It uses a different request/response format from `/api/search` and is documented here for integration developers.
+
+> **Note**: For most integrations, prefer `/api/search` above. The `/api/chat` endpoint is designed for Perplexica's UI and may change between versions.
+
+### **POST** `/api/chat`
+
+**Full URL**: `http://localhost:3000/api/chat`
+
+#### Request Body Structure
+
+```json
+{
+  "message": {
+    "messageId": "msg-123",
+    "chatId": "chat-456",
+    "content": "What is Perplexica?"
+  },
+  "chatModel": {
+    "providerId": "550e8400-e29b-41d4-a716-446655440000",
+    "key": "gpt-4o-mini"
+  },
+  "embeddingModel": {
+    "providerId": "550e8400-e29b-41d4-a716-446655440000",
+    "key": "text-embedding-3-large"
+  },
+  "sources": ["web"],
+  "optimizationMode": "balanced",
+  "history": [
+    ["human", "Hi"],
+    ["assistant", "Hello! How can I help?"]
+  ],
+  "files": [],
+  "systemInstructions": ""
+}
+```
+
+#### Request Parameters
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `message` | object | ✅ | `{ messageId, chatId, content }` — message identifiers and query text |
+| `chatModel` | object | ✅ | `{ providerId, key }` — chat model to use (from `/api/providers`) |
+| `embeddingModel` | object | ✅ | `{ providerId, key }` — embedding model (from `/api/providers`) |
+| `sources` | string[] | No | Sources to search: `"web"`, `"academic"`, `"discussions"`. Default: `[]` |
+| `optimizationMode` | string | ✅ | `"speed"`, `"balanced"`, or `"quality"` |
+| `history` | array | No | Previous conversation as `["human"/"assistant", "text"]` tuples |
+| `files` | string[] | No | Uploaded file IDs to include in search context |
+| `systemInstructions` | string \| null | No | Custom instructions for the AI (may be null or omitted) |
+
+#### Response Format
+
+The response is an NDJSON (newline-delimited JSON) stream with `Content-Type: text/event-stream`. Each line is a complete JSON object.
+
+Event types:
+
+| Type | Description | Fields |
+|------|-------------|--------|
+| `block` | New content block created | `block` (full block object, e.g. `{ id, type, data, ... }`) |
+| `updateBlock` | Incremental update to a block | `blockId, patch` (JSON Patch array) |
+| `researchComplete` | Search/research phase finished | — |
+| `messageEnd` | Stream complete | — |
+| `error` | Error occurred | `data` (error message) |
+
+The `updateBlock` events use [JSON Patch](https://jsonpatch.com/) format. To get the final answer text, look for `patch` entries with `op: "replace"` and `path: "/data"` — the `value` field contains the cumulative text for that block.

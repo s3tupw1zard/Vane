@@ -1,5 +1,11 @@
-export const POST = async (req: Request) => {
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/middleware';
+
+export const POST = async (req: NextRequest) => {
   try {
+    const auth = await requireAuth(req);
+    if (!auth.success) return auth.error;
+
     const body: {
       lat: number;
       lng: number;
@@ -7,12 +13,7 @@ export const POST = async (req: Request) => {
     } = await req.json();
 
     if (!body.lat || !body.lng) {
-      return Response.json(
-        {
-          message: 'Invalid request.',
-        },
-        { status: 400 },
-      );
+      return Response.json({ message: 'Invalid request.' }, { status: 400 });
     }
 
     const res = await fetch(
@@ -25,12 +26,7 @@ export const POST = async (req: Request) => {
 
     if (data.error) {
       console.error(`Error fetching weather data: ${data.reason}`);
-      return Response.json(
-        {
-          message: 'An error has occurred.',
-        },
-        { status: 500 },
-      );
+      return Response.json({ message: 'An error has occurred.' }, { status: 500 });
     }
 
     const weather: {
@@ -60,99 +56,70 @@ export const POST = async (req: Request) => {
         weather.icon = `clear-${dayOrNight}`;
         weather.condition = 'Clear';
         break;
-
       case 1:
-        weather.condition = 'Mainly Clear';
       case 2:
-        weather.condition = 'Partly Cloudy';
       case 3:
         weather.icon = `cloudy-1-${dayOrNight}`;
-        weather.condition = 'Cloudy';
+        weather.condition = code === 1 ? 'Mainly Clear' : code === 2 ? 'Partly Cloudy' : 'Cloudy';
         break;
-
       case 45:
-        weather.condition = 'Fog';
       case 48:
         weather.icon = `fog-${dayOrNight}`;
         weather.condition = 'Fog';
         break;
-
       case 51:
-        weather.condition = 'Light Drizzle';
       case 53:
-        weather.condition = 'Moderate Drizzle';
       case 55:
         weather.icon = `rainy-1-${dayOrNight}`;
-        weather.condition = 'Dense Drizzle';
+        weather.condition = code === 51 ? 'Light Drizzle' : code === 53 ? 'Moderate Drizzle' : 'Dense Drizzle';
         break;
-
       case 56:
-        weather.condition = 'Light Freezing Drizzle';
       case 57:
         weather.icon = `frost-${dayOrNight}`;
-        weather.condition = 'Dense Freezing Drizzle';
+        weather.condition = 'Freezing Drizzle';
         break;
-
       case 61:
-        weather.condition = 'Slight Rain';
       case 63:
-        weather.condition = 'Moderate Rain';
       case 65:
-        weather.condition = 'Heavy Rain';
         weather.icon = `rainy-2-${dayOrNight}`;
+        weather.condition = code === 61 ? 'Slight Rain' : code === 63 ? 'Moderate Rain' : 'Heavy Rain';
         break;
-
       case 66:
-        weather.condition = 'Light Freezing Rain';
       case 67:
-        weather.condition = 'Heavy Freezing Rain';
         weather.icon = 'rain-and-sleet-mix';
+        weather.condition = 'Freezing Rain';
         break;
-
       case 71:
-        weather.condition = 'Slight Snow Fall';
       case 73:
-        weather.condition = 'Moderate Snow Fall';
       case 75:
-        weather.condition = 'Heavy Snow Fall';
         weather.icon = `snowy-2-${dayOrNight}`;
+        weather.condition = code === 71 ? 'Slight Snow' : code === 73 ? 'Moderate Snow' : 'Heavy Snow';
         break;
-
       case 77:
-        weather.condition = 'Snow';
         weather.icon = `snowy-1-${dayOrNight}`;
+        weather.condition = 'Snow';
         break;
-
       case 80:
-        weather.condition = 'Slight Rain Showers';
       case 81:
-        weather.condition = 'Moderate Rain Showers';
       case 82:
-        weather.condition = 'Heavy Rain Showers';
         weather.icon = `rainy-3-${dayOrNight}`;
+        weather.condition = code === 80 ? 'Slight Rain Showers' : code === 81 ? 'Moderate Rain Showers' : 'Heavy Rain Showers';
         break;
-
       case 85:
-        weather.condition = 'Slight Snow Showers';
       case 86:
-        weather.condition = 'Moderate Snow Showers';
       case 87:
-        weather.condition = 'Heavy Snow Showers';
         weather.icon = `snowy-3-${dayOrNight}`;
+        weather.condition = code === 85 ? 'Slight Snow Showers' : code === 86 ? 'Moderate Snow Showers' : 'Heavy Snow Showers';
         break;
-
       case 95:
-        weather.condition = 'Thunderstorm';
         weather.icon = `scattered-thunderstorms-${dayOrNight}`;
+        weather.condition = 'Thunderstorm';
         break;
-
       case 96:
-        weather.condition = 'Thunderstorm with Slight Hail';
       case 99:
-        weather.condition = 'Thunderstorm with Heavy Hail';
         weather.icon = 'severe-thunderstorm';
+        weather.condition = 'Thunderstorm with Hail';
         break;
-
       default:
         weather.icon = `clear-${dayOrNight}`;
         weather.condition = 'Clear';
@@ -161,14 +128,7 @@ export const POST = async (req: Request) => {
 
     return Response.json(weather);
   } catch (err) {
-    console.error('An error occurred while getting home widgets', err);
-    return Response.json(
-      {
-        message: 'An error has occurred.',
-      },
-      {
-        status: 500,
-      },
-    );
+    console.error('An error occurred while getting weather data:', err);
+    return Response.json({ message: 'An error has occurred.' }, { status: 500 });
   }
 };

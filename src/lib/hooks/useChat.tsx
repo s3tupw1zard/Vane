@@ -425,6 +425,19 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
           method: 'POST',
         });
 
+        if (!res.ok) {
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.messageId === lastMsg.messageId
+                ? { ...msg, status: 'error' as const }
+                : msg,
+            ),
+          );
+          setLoading(false);
+          isReconnectingRef.current = false;
+          return;
+        }
+
         if (!res.body) throw new Error('No response body');
 
         const reader = res.body?.getReader();
@@ -441,16 +454,17 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
             partialChunk += decoder.decode(value, { stream: true });
 
-            try {
-              const messages = partialChunk.split('\n');
-              for (const msg of messages) {
-                if (!msg.trim()) continue;
-                const json = JSON.parse(msg);
+            const lines = partialChunk.split('\n');
+            partialChunk = lines[lines.length - 1];
+
+            for (const line of lines.slice(0, -1)) {
+              if (!line.trim()) continue;
+              try {
+                const json = JSON.parse(line);
                 messageHandler(json);
+              } catch (error) {
+                console.warn('Failed to parse SSE line, skipping:', line);
               }
-              partialChunk = '';
-            } catch (error) {
-              console.warn('Incomplete JSON, waiting for next chunk...');
             }
           }
         } finally {
@@ -551,6 +565,10 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     const messageId = message.messageId;
 
     return async (data: any) => {
+      if (data.type === 'keepAlive') {
+        return;
+      }
+
       if (data.type === 'error') {
         toast.error(data.data);
         setLoading(false);
@@ -791,16 +809,19 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
       partialChunk += decoder.decode(value, { stream: true });
 
-      try {
-        const messages = partialChunk.split('\n');
-        for (const msg of messages) {
-          if (!msg.trim()) continue;
-          const json = JSON.parse(msg);
+      const lines = partialChunk.split('\n');
+      // All lines except the last are complete (server terminates each message with \n)
+      // The last element may be an incomplete line — keep it for the next chunk
+      partialChunk = lines[lines.length - 1];
+
+      for (const line of lines.slice(0, -1)) {
+        if (!line.trim()) continue;
+        try {
+          const json = JSON.parse(line);
           messageHandler(json);
+        } catch (error) {
+          console.warn('Failed to parse SSE line, skipping:', line);
         }
-        partialChunk = '';
-      } catch (error) {
-        console.warn('Incomplete JSON, waiting for next chunk...');
       }
     }
   };
