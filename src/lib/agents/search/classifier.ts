@@ -46,6 +46,7 @@ const safeDefault = (query: string): z.infer<typeof schema> => ({
     showWeatherWidget: false,
     showStockWidget: false,
     showCalculationWidget: false,
+    showCurrencyWidget: false,
   },
   standaloneFollowUp: query,
 });

@@ -39,7 +39,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
     });
   }
 
-  private convertToOpenAIMessages(
+  protected convertToOpenAIMessages(
     messages: Message[],
   ): ChatCompletionMessageParam[] {
     const openaiMessages: ChatCompletionMessageParam[] = [];
@@ -74,7 +74,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
 
       openaiMessages.push({
         role: message.role,
-        content: message.content,
+        content: message.content ?? '',
       });
     }
 
@@ -86,7 +86,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
       model: this.config.model,
       messages: this.convertToOpenAIMessages(input.messages),
       tools:
-        input.tools?.length > 0
+        input.tools && input.tools.length > 0
           ? input.tools.map((tool) => ({
               type: 'function' as const,
               function: {
@@ -115,8 +115,8 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
       const toolCalls =
         choice.message.tool_calls?.map((tc) => ({
           id: tc.id,
-          name: tc.function.name,
-          arguments: JSON.parse(tc.function.arguments || '{}'),
+          name: 'function' in tc ? tc.function.name : '',
+          arguments: JSON.parse('function' in tc ? (tc.function.arguments || '{}') : '{}'),
         })) || [];
 
       return {
@@ -138,14 +138,14 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
   async *streamText(
     input: GenerateTextInput,
   ): AsyncGenerator<StreamTextOutput> {
-    const openaiTools: ChatCompletionTool[] = input.tools?.map((tool) => ({
+    const openaiTools: ChatCompletionTool[] = (input.tools?.map((tool) => ({
       type: 'function',
       function: {
         name: tool.name,
         description: tool.description,
         parameters: z.toJSONSchema(tool.schema),
       },
-    })) as ChatCompletionTool[];
+    })) ?? []) as ChatCompletionTool[];
 
     const stream = await this.openAIClient.chat.completions.create({
       model: this.config.model,
@@ -196,7 +196,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
                   const call = {
                     name: tc.function.name,
                     id: tc.id,
-                    arguments: tc.function.arguments || '',
+                    arguments: tc.function.arguments ?? '',
                   };
                   recievedToolCalls[tc.index] = call;
                   return {
@@ -205,7 +205,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
                   };
                 }
 
-                existingCall.arguments += tc.function?.arguments || '';
+                existingCall.arguments += tc.function?.arguments ?? '';
                 // Some providers (e.g. Anthropic's OpenAI-compatible endpoint)
                 // stream tool-call deltas where the accumulated arguments are
                 // still empty. partial-json's parse() throws " is empty" on an

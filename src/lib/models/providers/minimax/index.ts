@@ -5,7 +5,7 @@ import BaseEmbedding from '../../base/embedding';
 import BaseModelProvider from '../../base/provider';
 import BaseLLM from '../../base/llm';
 import MiniMaxAnthropicLLM from './minimaxAnthropicLLM';
-import MiniMaxLLM from './minimaxLLM';
+import MiniMaxLLM from './miniMaxLLM';
 
 interface MiniMaxConfig {
   apiKey: string;

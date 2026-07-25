@@ -57,7 +57,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       } else if (msg.role === 'assistant') {
         return {
           role: 'assistant',
-          content: msg.content,
+          content: msg.content ?? '',
           tool_calls:
             msg.tool_calls?.map((tc, i) => ({
               function: {
@@ -112,7 +112,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
     });
 
     return {
-      content: res.message.content,
+      content: res.message.content ?? '',
       toolCalls:
         res.message.tool_calls?.map((tc) => ({
           id: crypto.randomUUID(),
@@ -251,7 +251,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
     });
 
     for await (const chunk of stream) {
-      recievedObj += chunk.message.content;
+      recievedObj += chunk.message.content ?? '';
 
       try {
         yield parse(recievedObj) as T;

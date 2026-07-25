@@ -3,6 +3,7 @@ import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import type { UserRole, AuthUser, SessionUser } from '@/lib/auth';
 
 describe('DB Migration — real execution smoke tests', () => {
   // Create a temp DB, run all migrations, verify schema
@@ -86,7 +87,7 @@ describe('DB Migration — real execution smoke tests', () => {
       .all() as Array<{ name: string; notnull: number }>;
     const userIdCol = info.find((c) => c.name === 'userId');
     expect(userIdCol).toBeDefined();
-    expect(userIdCol.notnull).toBe(1); // NOT NULL
+    expect(userIdCol!.notnull).toBe(1); // NOT NULL
   });
 
   it('sessions.userId has correct NOT NULL constraint', () => {
@@ -95,7 +96,7 @@ describe('DB Migration — real execution smoke tests', () => {
       .all() as Array<{ name: string; notnull: number }>;
     const userIdCol = info.find((c) => c.name === 'userId');
     expect(userIdCol).toBeDefined();
-    expect(userIdCol.notnull).toBe(1); // NOT NULL
+    expect(userIdCol!.notnull).toBe(1); // NOT NULL
   });
 
   it('users.role defaults to user', () => {
@@ -104,7 +105,7 @@ describe('DB Migration — real execution smoke tests', () => {
       .all() as Array<{ name: string; dflt_value: string | null }>;
     const roleCol = info.find((c) => c.name === 'role');
     expect(roleCol).toBeDefined();
-    expect(roleCol.dflt_value).toBe("'user'");
+    expect(roleCol!.dflt_value).toBe("'user'");
   });
 });
 
@@ -115,22 +116,19 @@ describe('DB Schema — TypeScript type smoke tests', () => {
     expect(schema.sessions).toBeDefined();
   });
 
-  it('UserRole type allows admin and user', async () => {
-    const { UserRole } = await import('@/lib/auth');
+  it('UserRole type allows admin and user', () => {
     const roles: UserRole[] = ['admin', 'user'];
     expect(roles).toContain('admin');
     expect(roles).toContain('user');
   });
 
-  it('AuthUser has required fields', async () => {
-    const { AuthUser } = await import('@/lib/auth');
+  it('AuthUser has required fields', () => {
     const user: AuthUser = { id: 'test', username: 'test', role: 'user' };
     expect(user.id).toBe('test');
     expect(user.role).toBe('user');
   });
 
-  it('SessionUser includes sessionId', async () => {
-    const { SessionUser } = await import('@/lib/auth');
+  it('SessionUser includes sessionId', () => {
     const s: SessionUser = {
       id: 'test',
       username: 'test',

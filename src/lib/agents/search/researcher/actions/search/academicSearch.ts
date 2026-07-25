@@ -56,7 +56,7 @@ const academicSearchAction: ResearchAction<typeof schema> = {
 
     return {
       type: 'search_results',
-      results: results,
+      results: results.results,
     };
   },
 };

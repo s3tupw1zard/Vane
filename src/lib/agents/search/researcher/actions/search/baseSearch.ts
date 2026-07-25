@@ -133,8 +133,9 @@ export const executeSearch = async (input: {
           (step) => step.id === searchResultsBlockId,
         );
         if (subStepIndex !== -1) {
-          const existingReading = researchBlock.data.subSteps[subStepIndex].reading ?? [];
-          researchBlock.data.subSteps[subStepIndex].reading = [...existingReading, ...resultChunks];
+          const subStep = researchBlock.data.subSteps[subStepIndex] as { reading?: Chunk[] };
+          const existingReading = subStep.reading ?? [];
+          subStep.reading = [...existingReading, ...resultChunks];
           input.session.updateBlock(researchBlock.id, [
             {
               op: 'replace',
@@ -162,9 +163,9 @@ export const executeSearch = async (input: {
 
     researchBlock.data.subSteps.push({
       id: crypto.randomUUID(),
-      type: 'results',
-      results,
-    });
+      type: 'search_results',
+      reading: results,
+    } as any);
     input.session.updateBlock(researchBlock.id, [
       {
         op: 'replace',

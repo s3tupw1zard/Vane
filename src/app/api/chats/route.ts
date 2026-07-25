@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/middleware';
 import db from '@/lib/db';
 import { eq } from 'drizzle-orm';
-import { chats } from '@/lib/db/schema';
+import { chats, messages } from '@/lib/db/schema';
 
 export const runtime = 'nodejs';
 
