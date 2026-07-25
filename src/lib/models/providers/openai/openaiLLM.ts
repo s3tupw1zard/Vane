@@ -253,20 +253,6 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
     });
 
     if (response.choices && response.choices.length > 0) {
-<<<<<<< HEAD
-      const rawContent = response.choices[0].message.content;
-      try {
-        return input.schema.parse(
-          JSON.parse(
-            repairJson(rawContent!, {
-              extractJson: true,
-            }) as string,
-          ),
-        ) as T;
-      } catch (err) {
-        throw new Error(
-          `Error parsing response from OpenAI: ${err}\nRaw response: ${rawContent}`,
-=======
       const choice = response.choices[0];
       // Preserve a genuine null/empty content as an explicit failure. The API
       // returns content === null on refusals and on some failed/truncated
@@ -292,7 +278,6 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
           `Error parsing response from OpenAI: ${err instanceof Error ? err.message : err}\n` +
             `finish_reason=${choice.finish_reason}\n` +
             `usage=${JSON.stringify((response as { usage?: unknown }).usage)}`,
->>>>>>> origin/integration
         );
       }
     }
@@ -312,31 +297,10 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
     })) {
       receivedObject += chunk.contentChunk;
 
-<<<<<<< HEAD
-    for await (const chunk of stream) {
-      if (chunk.type === 'response.output_text.delta' && chunk.delta) {
-        recievedObj += chunk.delta;
-
-        try {
-          yield parse(recievedObj) as T;
-        } catch (err) {
-          console.log('Error parsing partial object from OpenAI:', err);
-          yield {} as T;
-        }
-      } else if (chunk.type === 'response.output_text.done' && chunk.text) {
-        try {
-          yield parse(chunk.text) as T;
-        } catch (err) {
-          throw new Error(
-            `Error parsing response from OpenAI: ${err}\nRaw response: ${chunk.text}`,
-          );
-        }
-=======
       try {
         yield input.schema.parse(JSON.parse(receivedObject)) as T;
       } catch {
         continue;
->>>>>>> origin/integration
       }
     }
   }

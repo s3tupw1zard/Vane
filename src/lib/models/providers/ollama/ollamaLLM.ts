@@ -217,14 +217,8 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
     try {
       return input.schema.parse(JSON.parse(extractJsonObject(raw))) as T;
     } catch (err) {
-<<<<<<< HEAD
-      throw new Error(
-        `Error parsing response from Ollama: ${err}\nRaw response: ${response.message.content}`,
-      );
-=======
       // Keep raw content in the error so parse failures are debuggable.
       throw new Error(`Error parsing response from Ollama: ${err}\nraw=${raw}`);
->>>>>>> origin/integration
     }
   }
 
