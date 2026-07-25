@@ -758,8 +758,6 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
     setMessages((prevMessages) => [...prevMessages, newMessage]);
 
-    const messageIndex = messages.findIndex((m) => m.messageId === messageId);
-
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: {
@@ -776,12 +774,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         files: fileIds,
         sources: sources,
         optimizationMode: optimizationMode,
-        history: rewrite
-          ? chatHistory.current.slice(
-              0,
-              messageIndex === -1 ? undefined : messageIndex,
-            )
-          : chatHistory.current,
+        history: chatHistory.current,
         chatModel: {
           key: chatModelProvider.key,
           providerId: chatModelProvider.providerId,
