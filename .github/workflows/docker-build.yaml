@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-      - canary
+      # - canary
   release:
     types: [published]
 
