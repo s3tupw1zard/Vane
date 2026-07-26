@@ -16,23 +16,31 @@ class SearchAgent {
       await this._searchAsync(session, input);
     } catch (err) {
       console.error('SearchAgent error:', err);
+
+      try {
+        await db
+          .update(messages)
+          .set({
+            status: 'error',
+            responseBlocks: session.getAllBlocks(),
+          })
+          .where(
+            and(
+              eq(messages.chatId, input.chatId),
+              eq(messages.messageId, input.messageId),
+            ),
+          )
+          .execute();
+      } catch (dbError) {
+        console.error('Failed to persist errored search state:', dbError);
+      }
+
       session.emit('error', {
         data:
           err instanceof Error
             ? err.message
             : 'An unknown error occurred during search',
       });
-
-      await db
-        .update(messages)
-        .set({ status: 'error' })
-        .where(
-          and(
-            eq(messages.chatId, input.chatId),
-            eq(messages.messageId, input.messageId),
-          ),
-        )
-        .execute();
     }
   }
 
