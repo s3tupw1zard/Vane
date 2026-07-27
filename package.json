@@ -11,10 +11,10 @@
     "format:write": "prettier . --write",
     "test": "vitest run",
     "test:watch": "vitest",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:generate": "drizzle-kit generate:sqlite",
+    "db:migrate": "drizzle-kit up:sqlite",
+    "db:check": "drizzle-kit check:sqlite",
+    "db:introspect": "drizzle-kit introspect:sqlite"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.111.0",
