@@ -17,7 +17,7 @@
     "db:introspect": "drizzle-kit introspect:sqlite"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.111.0",
+    "@anthropic-ai/sdk": "^0.115.0",
     "@google/genai": "^1.52.0",
     "@headlessui/react": "^2.2.0",
     "@headlessui/tailwindcss": "^0.2.2",
@@ -27,7 +27,7 @@
     "@phosphor-icons/react": "^2.1.10",
     "@radix-ui/react-tooltip": "^1.2.16",
     "@tailwindcss/typography": "^0.5.20",
-    "@tavily/core": "^0.6.4",
+    "@tavily/core": "^0.7.6",
     "@toolsycc/json-repair": "^0.1.22",
     "async-mutex": "^0.5.0",
     "axios": "^1.18.1",
@@ -35,7 +35,6 @@
     "better-sqlite3": "^11.9.1",
     "clsx": "^2.1.0",
     "drizzle-orm": "^0.45.2",
-    "g": "^2.0.1",
     "jose": "^6.2.4",
     "js-tiktoken": "^1.0.21",
     "jsdom": "^29.1.1",
@@ -48,10 +47,10 @@
     "mathjs": "^15.1.0",
     "motion": "^12.42.2",
     "next": "^16.2.11",
-    "next-themes": "^0.3.0",
+    "next-themes": "^0.4.6",
     "officeparser": "^6.0.7",
     "ollama": "^0.6.3",
-    "openai": "^6.9.0",
+    "openai": "^6.49.0",
     "partial-json": "^0.1.7",
     "pdf-parse": "^2.4.5",
     "playwright": "^1.62.0",
@@ -65,7 +64,6 @@
     "tailwind-merge": "^2.2.2",
     "uuid": "^13.0.2",
     "yahoo-finance2": "^3.10.2",
-    "yarn": "^1.22.22",
     "yet-another-react-lightbox": "^3.32.1",
     "zod": "^4.4.3"
   },
@@ -95,5 +93,14 @@
   },
   "optionalDependencies": {
     "@napi-rs/canvas": "^0.1.100"
+  },
+  "resolutions": {
+    "brace-expansion": "^2.1.2",
+    "protobufjs": "^7.6.5",
+    "tar": "^7.5.19",
+    "ws": "^8.21.0",
+    "postcss": "^8.5.18",
+    "@xmldom/xmldom": "^0.8.13",
+    "form-data": "^4.0.6"
   }
 }
