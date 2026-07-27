@@ -18,9 +18,9 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
-    "@google/genai": "^1.52.0",
+    "@google/genai": "^2.13.0",
     "@headlessui/react": "^2.2.0",
-    "@huggingface/transformers": "^3.8.1",
+    "@huggingface/transformers": "^4.2.0",
     "@icons-pack/react-simple-icons": "^12.3.0",
     "@mozilla/readability": "^0.6.0",
     "@phosphor-icons/react": "^2.1.10",
