@@ -1,6 +1,7 @@
 import { JSDOM } from 'jsdom';
 import { Readability } from '@mozilla/readability';
 import { Mutex } from 'async-mutex';
+import { truncateTextByTokens } from '@/lib/utils/splitText';
 
 function isBlockedIPv4(ip: string): boolean {
   const [a, b, c, d] = ip.split('.').map(Number);
@@ -153,10 +154,17 @@ class Scraper {
 
       const title = await page.title();
 
+      // Limit scraped content to avoid blowing up the context window.
+      // Truncate to ~6000 tokens — preserves the most relevant content
+      // (page header, intro, key sections) while staying within context limits.
+      const maxTokensPerPage = 6000;
+      const rawText = content?.textContent?.trim() ?? 'No content available';
+      const truncatedText = truncateTextByTokens(rawText, maxTokensPerPage);
+
       return {
         content: `
         # ${title ?? 'No title'} - ${url}
-        ${content?.textContent?.trim() ?? 'No content available'}
+        ${truncatedText}
         `,
         title,
       };
