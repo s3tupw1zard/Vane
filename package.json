@@ -11,10 +11,10 @@
     "format:write": "prettier . --write",
     "test": "vitest run",
     "test:watch": "vitest",
-    "db:generate": "drizzle-kit generate:sqlite",
-    "db:migrate": "drizzle-kit up:sqlite",
-    "db:check": "drizzle-kit check:sqlite",
-    "db:introspect": "drizzle-kit introspect:sqlite"
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:check": "drizzle-kit check",
+    "db:introspect": "drizzle-kit introspect"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
@@ -82,7 +82,7 @@
     "@vitejs/plugin-react": "^6.0.4",
     "@vitest/coverage-v8": "^4.1.10",
     "autoprefixer": "^10.5.4",
-    "drizzle-kit": "^0.18.1",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^10.8.0",
     "eslint-config-next": "^16.2.11",
     "postcss": "^8.5.23",
