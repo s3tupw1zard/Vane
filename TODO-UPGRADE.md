@@ -2,16 +2,28 @@
 
 ## Remaining Tasks
 
-- [x] Run `yarn lint` and fix lint errors introduced by dependency updates. (Completed: migrated to flat config, 0 errors, 120 warnings remaining)
-- [ ] Run `yarn test` and fix test regressions. (Tests pass: 30/30)
-- [ ] Address remaining lint warnings (120 warnings, mostly unused vars and prefer-const)
+- [x] Run `yarn lint` and fix lint errors introduced by dependency updates. (Completed: migrated to flat config, 0 errors, 125 warnings remaining)
+- [x] Run `yarn test` and fix test regressions. (Tests pass: 39/39)
+- [x] Verify `drizzle-kit` compatibility — updated to `^0.31.10`, aligned with `drizzle-orm@^0.45.2` (Phase 3d)
+- [x] Review `g` package in dependencies — removed (Phase 1)
+- [x] Review `yarn` package in dependencies — removed (Phase 1)
+- [ ] Address remaining lint warnings (125 warnings, mostly unused vars and prefer-const)
 - [ ] Consider enabling stricter TypeScript ESLint rules after addressing warnings
-- [ ] Verify `drizzle-kit` compatibility — currently at `^0.18.1`, may need update for `drizzle-orm@^0.45.2`.
-- [ ] Review `g` package in dependencies — appears to be an accidental install (`g@^2.0.1` is a meta-package).
-- [ ] Review `yarn` package in dependencies — `yarn@^1.22.22` in `dependencies` is unusual and likely unnecessary.
 - [ ] Investigate `@modelcontextprotocol/sdk` and `express` for `integrations/mcp-server` — currently excluded from root build; should have its own build pipeline.
 - [ ] Review `baseSearch.ts` `as any` cast for `ResearchBlockSubStep` — may indicate missing type variant.
 - [ ] Review `scrapeURLAction` removal — verify no runtime dependency exists.
+
+## Completed Phases
+
+- [x] Phase 1: Safe updates (minor version bumps, remove accidental packages)
+- [x] Phase 2: Security fixes (transitive dependency resolutions)
+- [x] Phase 3a: React 18 → 19 migration
+- [x] Phase 3b: TypeScript 5 → 6 + @types/node 24 → 26
+- [x] Phase 3c: Tailwind CSS 3 → 4 migration
+- [x] Phase 3d: drizzle-kit 0.18 → 0.31
+- [x] Phase 4a: AI/ML providers (@google/genai v2, @huggingface/transformers v4, @icons-pack/react-simple-icons v13)
+- [x] Phase 4b: UI libraries (lucide-react v1, sonner v2, markdown-to-jsx v9, react-text-to-speech v5)
+- [x] Phase 4c: Data/utility libraries (better-sqlite3 v13, yahoo-finance2 v4, uuid v14, officeparser v7)
 
 ## Known Limitations
 

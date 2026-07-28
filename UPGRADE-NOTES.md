@@ -163,3 +163,47 @@ Make `yarn install`, `yarn build`, and TypeScript type checking complete success
 
 - LSP diagnostics: no diagnostics in `src/lib/models/providers/openai/openaiLLM.ts`.
 - `yarn build`: Success; TypeScript completed with no errors.
+
+---
+
+## 2026-07-28 — Phase 4: Major Library Upgrades
+
+### Goal
+Complete Phase 4 of the dependency modernization plan — upgrade all remaining major library dependencies.
+
+### Phase 4a: AI/ML Providers (completed earlier)
+- **@google/genai**: ^1.52.0 → ^2.13.0 (Major)
+- **@huggingface/transformers**: ^3.8.1 → ^4.2.0 (Major)
+
+### Phase 4a remainder: Icon Library
+- **@icons-pack/react-simple-icons**: ^12.3.0 → ^13.13.0 (Major)
+- Not directly imported in source code, no code changes required.
+
+### Phase 4b: UI Libraries
+- **lucide-react**: ^0.556.0 → ^1.27.0 (Major) — 37 files import icons, no renames needed
+- **sonner**: ^1.4.41 → ^2.0.7 (Major) — 21 files use `toast`/`Toaster`, API compatible
+- **markdown-to-jsx**: ^7.7.2 → ^9.9.0 (Major, 2 versions) — `MarkdownToJSX`, `RuleType` API compatible
+- **react-text-to-speech**: ^0.14.5 → ^5.1.10 (Major, 5 versions) — `useSpeech` hook API compatible
+
+### Phase 4c: Data/Utility Libraries
+- **better-sqlite3**: ^11.9.1 → ^13.0.1 (Major, 2 versions, native bindings) — API compatible
+- **yahoo-finance2**: ^3.10.2 → ^4.0.0 (Major, completed earlier)
+- **uuid**: ^13.0.2 → ^14.0.1 (Major) — `v4` import compatible
+- **officeparser**: ^6.0.7 → ^7.5.0 (Major) — default import compatible
+- **@types/bcryptjs**: ^2.4.6 → ^3.0.0 (Major, types only)
+- **@types/uuid**: ^10.0.0 → ^11.0.0 (Major, types only)
+- **@napi-rs/canvas**: ^0.1.100 → ^1.0.3 (Major, optional dependency)
+
+### Issues Closed
+- **Issue #171**: Update Next.js to 15.5.9 — superseded, already at 16.2.11
+- **Issue #180**: Upgrade jspdf to fix dompurify vulnerabilities — already at 4.2.1
+
+### Validation
+- `yarn install`: Success
+- `yarn build`: Success (all 3 commits)
+- `yarn test`: 39/39 passed (all 3 commits)
+- `yarn lint`: 0 errors, 125 pre-existing warnings (all 3 commits)
+
+### Files Changed
+- `package.json`: version bumps for 13 packages
+- `yarn.lock`: regenerated lockfile entries
