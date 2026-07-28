@@ -24,6 +24,7 @@
 - [x] Phase 4a: AI/ML providers (@google/genai v2, @huggingface/transformers v4, @icons-pack/react-simple-icons v13)
 - [x] Phase 4b: UI libraries (lucide-react v1, sonner v2, markdown-to-jsx v9, react-text-to-speech v5)
 - [x] Phase 4c: Data/utility libraries (better-sqlite3 v13, yahoo-finance2 v4, uuid v14, officeparser v7)
+- [x] Phase 5: PR Recreations (all PRs already implemented, closed resolved PRs and issues, added missing tests)
 
 ## Known Limitations
 

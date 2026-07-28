@@ -404,7 +404,7 @@ Use `resolutions` field in `package.json` to force-update vulnerable transitive 
 
 **Estimated effort**: 2-4 hours per PR  
 **PR category**: Bug Fixes/Features  
-**Status**: PENDING
+**Status**: COMPLETE
 
 ### Priority Matrix
 
