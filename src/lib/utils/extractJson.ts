@@ -1,4 +1,24 @@
 /**
+ * Strip markdown code fences from LLM responses before JSON parsing.
+ * 
+ * Some LLM providers (Claude via OpenAI-compatible APIs, certain Ollama models)
+ * wrap JSON output in markdown code fences:
+ *   ```json
+ *   {"key": "value"}
+ *   ```
+ * 
+ * This causes JSON.parse to fail. Strip fences before passing to extractJsonObject.
+ */
+export const stripMarkdownFences = (raw: string): string => {
+  if (!raw) return raw;
+  
+  let stripped = raw.replace(/^```(?:json|JSON)?\s*\n?/, '');
+  stripped = stripped.replace(/\n?```\s*$/, '');
+  
+  return stripped.trim();
+};
+
+/**
  * Extract and repair a JSON object from a model response.
  *
  * Model output can arrive wrapped in reasoning markers, markdown fences, or
@@ -21,24 +41,10 @@ import { jsonrepair } from 'jsonrepair';
 
 export const extractJsonObject = (raw: string | null | undefined): string => {
   if (!raw) return '{}';
+  
+  const stripped = stripMarkdownFences(raw);
 
-  // Reasoning markers and control tokens appear *before* the JSON object and
-  // can put a stray { in front of the real one — for example a { that lives
-  // inside a leading reasoning block ("consider the set {1,2,3}") — which
-  // would mislead the brace-balance walk below. But the same literal text can
-  // legitimately appear *inside* JSON string values (a field whose content
-  // discusses markup, or model-emitted control-token sentinels the caller
-  // wants preserved), so we must NOT strip markers across the whole string.
-  //
-  // Strip only *leading* marker blocks, anchored at the front, BEFORE locating
-  // the first { — the order matters: slicing at the first { first would cut
-  // inside a marker block and destroy the opening tag, leaving the block
-  // un-strippable. Peeling front-anchored blocks first (complete reasoning
-  // blocks, bare tag fragments, control tokens) removes a { that lives inside
-  // a marker, so the next first { is the real object. Because peeling is
-  // front-anchored and stops once no marker remains at the front, marker text
-  // inside the JSON body is never touched.
-  let s = raw.trimStart();
+  let s = stripped.trimStart();
   for (;;) {
     const before = s;
     s = s

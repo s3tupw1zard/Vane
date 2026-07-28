@@ -9,6 +9,7 @@ import {
 import z from 'zod';
 import { parse } from 'partial-json';
 import { repairJson } from '@toolsycc/json-repair';
+import { stripMarkdownFences } from '@/lib/utils/extractJson';
 
 class MiniMaxLLM extends OpenAILLM {
   async generateText(input: GenerateTextInput): Promise<GenerateTextOutput> {
@@ -56,9 +57,11 @@ class MiniMaxLLM extends OpenAILLM {
 
     if (response.choices && response.choices.length > 0) {
       try {
+        const content = response.choices[0].message.content!;
+        const stripped = stripMarkdownFences(content);
         return input.schema.parse(
           JSON.parse(
-            repairJson(response.choices[0].message.content!, {
+            repairJson(stripped, {
               extractJson: true,
             }) as string,
           ),
@@ -105,7 +108,8 @@ class MiniMaxLLM extends OpenAILLM {
         receivedObj += content;
 
         try {
-          yield parse(receivedObj) as T;
+          const stripped = stripMarkdownFences(receivedObj);
+          yield parse(stripped) as T;
         } catch {
           yield {} as T;
         }

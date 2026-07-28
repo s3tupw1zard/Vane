@@ -207,7 +207,7 @@ class UploadManager {
             const fileRecord: RecordedFile = {
                 id: fileId,
                 userId: userId,
-                name: file.name,
+                name: Buffer.from(file.name, 'latin1').toString('utf8'),
                 filePath: filePath,
                 contentPath: contentFilePath,
                 uploadedAt: new Date().toISOString(),
@@ -218,7 +218,7 @@ class UploadManager {
             processedFiles.push({
                 fileExtension: fileExtension || '',
                 fileId,
-                fileName: file.name
+                fileName: Buffer.from(file.name, 'latin1').toString('utf8')
             });
         }))
 
