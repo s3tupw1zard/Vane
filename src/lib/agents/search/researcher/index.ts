@@ -50,7 +50,7 @@ class Researcher {
         content: `
           <conversation>
           ${formatChatHistoryAsString(input.chatHistory.slice(-10))}
-           User: ${input.followUp} (Standalone question: ${input.classification.standaloneFollowUp})
+            User: ${input.classification.standaloneFollowUp}
            </conversation>
         `,
       },
@@ -155,9 +155,8 @@ class Researcher {
         break;
       }
 
-      if (finalToolCalls[finalToolCalls.length - 1].name === 'done') {
-        break;
-      }
+      const shouldFinish =
+        finalToolCalls[finalToolCalls.length - 1].name === 'done';
 
       agentMessageHistory.push({
         role: 'assistant',
@@ -186,6 +185,10 @@ class Researcher {
           content: JSON.stringify(action),
         });
       });
+
+      if (shouldFinish) {
+        break;
+      }
     }
 
     const searchResults = actionOutput

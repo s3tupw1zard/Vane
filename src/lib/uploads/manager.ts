@@ -8,6 +8,7 @@ import { CanvasFactory } from 'pdf-parse/worker';
 import officeParser from 'officeparser'
 
 const supportedMimeTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'] as const
+const embeddingBatchSize = 10;
 
 type SupportedMimeType = typeof supportedMimeTypes[number];
 
@@ -29,6 +30,30 @@ type FileRes = {
     fileName: string;
     fileExtension: string;
     fileId: string;
+}
+
+type TextEmbeddingModel = {
+    embedText(texts: string[]): Promise<number[][]>;
+}
+
+export const embedTextInBatches = async (
+    embeddingModel: TextEmbeddingModel,
+    texts: string[],
+): Promise<number[][]> => {
+    const embeddings: number[][] = [];
+
+    for (let startIndex = 0; startIndex < texts.length; startIndex += embeddingBatchSize) {
+        const textBatch = texts.slice(startIndex, startIndex + embeddingBatchSize);
+        const batchEmbeddings = await embeddingModel.embedText(textBatch);
+
+        if (batchEmbeddings.length !== textBatch.length) {
+            throw new Error('Embeddings and text chunks length mismatch');
+        }
+
+        embeddings.push(...batchEmbeddings);
+    }
+
+    return embeddings;
 }
 
 class UploadManager {
@@ -102,11 +127,7 @@ class UploadManager {
                 const content = fs.readFileSync(filePath, 'utf-8');
 
                 const splittedText = splitText(content, 512, 128)
-                const embeddings = await this.embeddingModel.embedText(splittedText)
-
-                if (embeddings.length !== splittedText.length) {
-                    throw new Error('Embeddings and text chunks length mismatch');
-                }
+                const embeddings = await embedTextInBatches(this.embeddingModel, splittedText)
 
                 const contentPath = filePath.split('.').slice(0, -1).join('.') + '.content.json';
 
@@ -133,11 +154,7 @@ class UploadManager {
                 const pdfText = await parser.getText().then(res => res.text)
 
                 const pdfSplittedText = splitText(pdfText, 512, 128)
-                const pdfEmbeddings = await this.embeddingModel.embedText(pdfSplittedText)
-
-                if (pdfEmbeddings.length !== pdfSplittedText.length) {
-                    throw new Error('Embeddings and text chunks length mismatch');
-                }
+                const pdfEmbeddings = await embedTextInBatches(this.embeddingModel, pdfSplittedText)
 
                 const pdfContentPath = filePath.split('.').slice(0, -1).join('.') + '.content.json';
 
@@ -159,11 +176,7 @@ class UploadManager {
                 const docText = (await officeParser.parseOffice(docBuffer)).toText()
 
                 const docSplittedText = splitText(docText, 512, 128)
-                const docEmbeddings = await this.embeddingModel.embedText(docSplittedText)
-
-                if (docEmbeddings.length !== docSplittedText.length) {
-                    throw new Error('Embeddings and text chunks length mismatch');
-                }
+                const docEmbeddings = await embedTextInBatches(this.embeddingModel, docSplittedText)
 
                 const docContentPath = filePath.split('.').slice(0, -1).join('.') + '.content.json';
 

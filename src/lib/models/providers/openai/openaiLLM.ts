@@ -1,21 +1,17 @@
 import OpenAI from 'openai';
 import BaseLLM from '../../base/llm';
-import { zodTextFormat, zodResponseFormat } from 'openai/helpers/zod';
 import {
   GenerateObjectInput,
   GenerateOptions,
   GenerateTextInput,
   GenerateTextOutput,
   StreamTextOutput,
-  ToolCall,
 } from '../../types';
 import { parse } from 'partial-json';
 import z from 'zod';
 import {
-  ChatCompletionAssistantMessageParam,
   ChatCompletionMessageParam,
   ChatCompletionTool,
-  ChatCompletionToolMessageParam,
 } from 'openai/resources/index.mjs';
 import { Message } from '@/lib/types';
 import { extractJsonObject } from '@/lib/utils/extractJson';
@@ -226,8 +222,15 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
   }
 
   async generateObject<T>(input: GenerateObjectInput): Promise<T> {
+    const jsonSchema = z.toJSONSchema(input.schema);
     const response = await this.openAIClient.chat.completions.create({
-      messages: this.convertToOpenAIMessages(input.messages),
+      messages: this.convertToOpenAIMessages([
+        {
+          role: 'system',
+          content: `Respond with a valid JSON object that conforms to this JSON schema:\n${JSON.stringify(jsonSchema)}`,
+        },
+        ...input.messages,
+      ]),
       model: this.config.model,
       temperature:
         input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
@@ -240,16 +243,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
         this.config.options?.frequencyPenalty,
       presence_penalty:
         input.options?.presencePenalty ?? this.config.options?.presencePenalty,
-      // Use the SDK's zodResponseFormat to build a strict, cleaned json_schema
-      // rather than passing z.toJSONSchema output directly — the Draft-7 markers
-      // it leaves in are the suspected trigger for the doubled-brace malformation
-      // vLLM's strict-json_schema guided decoder emits (confirmed by direct
-      // testing against vLLM 0.25 serving Qwen3.6 and GLM-5.2; llama-swap only
-      // forwards vLLM's bytes unchanged, so it is not the source). But send via
-      // .create() not .parse(): the SDK's built-in parse runs JSON.parse on the
-      // raw content and crashes on reasoning models that emit thinking markers
-      // before the JSON. We repair/extract JSON ourselves below.
-      response_format: zodResponseFormat(input.schema, 'object'),
+      response_format: { type: 'json_object' },
     });
 
     if (response.choices && response.choices.length > 0) {

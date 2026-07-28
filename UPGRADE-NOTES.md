@@ -118,3 +118,48 @@ Make `yarn install`, `yarn build`, and TypeScript type checking complete success
 
 ### Files Changed
 20 files modified, 1 file deleted.
+
+---
+
+## 2026-07-28 — DeepSeek Reasoning Tag Sanitization
+
+### Changes
+
+- **src/lib/models/providers/deepseek/deepseekLLM.ts**: Strip reasoning before a lone `</think>` tag and remove explicit `<think>...</think>` blocks from non-streaming responses.
+- **src/lib/models/providers/deepseek/deepseekLLM.ts**: Buffer stream content until a closing think tag is found, preventing reasoning chunks from being yielded while preserving tag-free responses at completion.
+- **src/__tests__/deepseekLLM.test.ts**: Added regression coverage for explicit tags, a lone closing tag, tag-free responses, and streaming behavior.
+
+### Validation
+
+- Focused Vitest suite: 5/5 tests passed.
+- `yarn build` was blocked by an existing Next.js build lock; no active Next.js build process was found.
+
+---
+
+## 2026-07-28 — Search Researcher Query De-duplication
+
+### Changes
+
+- **src/lib/agents/search/researcher/index.ts**: Send the classifier's standalone, intent-preserving rewrite as the sole current user query to the researcher instead of including both the original query and rewrite.
+- **src/__tests__/researcher.test.ts**: Added regression coverage proving researcher prompts include the standalone rewrite without the original user query.
+
+### Validation
+
+- Focused Vitest suite: 1/1 test passed.
+- `yarn build`: Success; TypeScript completed with no errors.
+- LSP diagnostics: no diagnostics in the modified TypeScript files.
+
+---
+
+## 2026-07-28 — OpenAI-Compatible Structured Output
+
+### Changes
+
+- **src/lib/models/providers/openai/openaiLLM.ts**: `generateObject` now uses standard chat completions JSON mode (`response_format: { type: 'json_object' }`) with the Zod-derived schema included in a system instruction.
+- The existing JSON extraction and Zod validation remain in place, so OpenAI, OpenRouter, and LiteLLM responses are parsed and validated consistently without using OpenAI-only structured-output helpers.
+- Groq, LM Studio, and MiniMax already use standard `chat.completions.create` calls and manual JSON parsing; no provider registration changed.
+
+### Validation
+
+- LSP diagnostics: no diagnostics in `src/lib/models/providers/openai/openaiLLM.ts`.
+- `yarn build`: Success; TypeScript completed with no errors.

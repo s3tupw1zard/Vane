@@ -19,6 +19,21 @@ import {
 import { Message } from '@/lib/types';
 import { repairJson } from '@toolsycc/json-repair';
 
+const THINK_START_TAG = '<think>';
+const THINK_END_TAG = '</think>';
+
+export const stripDeepSeekThinking = (content: string): string => {
+  const closingTagIndex = content.indexOf(THINK_END_TAG);
+  if (closingTagIndex === -1) return content;
+
+  const openingTagIndex = content.lastIndexOf(THINK_START_TAG, closingTagIndex);
+  if (openingTagIndex === -1) {
+    return content.slice(closingTagIndex + THINK_END_TAG.length);
+  }
+
+  return `${content.slice(0, openingTagIndex)}${content.slice(closingTagIndex + THINK_END_TAG.length)}`;
+};
+
 type DeepSeekConfig = {
   apiKey: string;
   model: string;
@@ -95,7 +110,7 @@ class DeepSeekLLM extends BaseLLM<DeepSeekConfig> {
 
     if (response.choices && response.choices.length > 0) {
       return {
-        content: response.choices[0].message.content!,
+        content: stripDeepSeekThinking(response.choices[0].message.content!),
         toolCalls:
           response.choices[0].message.tool_calls
             ?.map((tc) => {
@@ -148,12 +163,32 @@ class DeepSeekLLM extends BaseLLM<DeepSeekConfig> {
 
     let recievedToolCalls: { name: string; id: string; arguments: string }[] =
       [];
+    let pendingContent = '';
+    let foundThinkEndTag = false;
 
     for await (const chunk of stream) {
       if (chunk.choices && chunk.choices.length > 0) {
         const toolCalls = chunk.choices[0].delta.tool_calls;
+        const rawContent = chunk.choices[0].delta.content || '';
+        const isComplete = chunk.choices[0].finish_reason !== null;
+        let contentChunk = rawContent;
+
+        if (!foundThinkEndTag) {
+          pendingContent += rawContent;
+          if (pendingContent.includes(THINK_END_TAG)) {
+            foundThinkEndTag = true;
+            contentChunk = stripDeepSeekThinking(pendingContent);
+            pendingContent = '';
+          } else if (isComplete) {
+            contentChunk = pendingContent;
+            pendingContent = '';
+          } else {
+            contentChunk = '';
+          }
+        }
+
         yield {
-          contentChunk: chunk.choices[0].delta.content || '',
+          contentChunk,
           toolCallChunk:
             toolCalls?.map((tc) => {
               if (!recievedToolCalls[tc.index]) {
@@ -173,7 +208,7 @@ class DeepSeekLLM extends BaseLLM<DeepSeekConfig> {
                 };
               }
             }) || [],
-          done: chunk.choices[0].finish_reason !== null,
+          done: isComplete,
           additionalInfo: {
             finishReason: chunk.choices[0].finish_reason,
           },
