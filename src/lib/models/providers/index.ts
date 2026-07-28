@@ -10,6 +10,10 @@ import AnthropicProvider from './anthropic';
 import LMStudioProvider from './lmstudio';
 import MiniMaxProvider from './minimax';
 import DeepSeekProvider from './deepseek';
+import OpenRouterProvider from './openrouter';
+import AzureOpenAIProvider from './azure';
+import ModelsLabProvider from './modelslab';
+import VeniceProvider from './venice';
 
 export const providers: Record<string, ProviderConstructor<any>> = {
   openai: OpenAIProvider,
@@ -22,6 +26,10 @@ export const providers: Record<string, ProviderConstructor<any>> = {
   lmstudio: LMStudioProvider,
   minimax: MiniMaxProvider,
   deepseek: DeepSeekProvider,
+  openrouter: OpenRouterProvider,
+  azure: AzureOpenAIProvider,
+  modelslab: ModelsLabProvider,
+  venice: VeniceProvider,
 };
 
 export const getModelProvidersUIConfigSection =
