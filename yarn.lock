@@ -5000,10 +5000,10 @@ lru-cache@^5.1.1:
   dependencies:
     yallist "^3.0.2"
 
-lucide-react@^0.556.0:
-  version "0.556.0"
-  resolved "https://registry.npmjs.org/lucide-react/-/lucide-react-0.556.0.tgz"
-  integrity sha512-iOb8dRk7kLaYBZhR2VlV1CeJGxChBgUthpSP8wom9jfj79qovgG6qcSdiy6vkoREKPnbUYzJsCn4o4PtG3Iy+A==
+lucide-react@^1.27.0:
+  version "1.27.0"
+  resolved "https://registry.yarnpkg.com/lucide-react/-/lucide-react-1.27.0.tgz#77bf52e9dfac44ab9ffd11d1b8e8a96da9c0cc83"
+  integrity sha512-rJicGl/3Fly/E0rOH1YmPZ6e49JCnKknh1ox1vpHnkfjujAkKA6sqUZvH3MTAaXXjgexyUwgNwTJzTtYuAFYJw==
 
 magic-string@^0.30.21:
   version "0.30.21"
@@ -5044,10 +5044,10 @@ mammoth@^1.9.1:
     underscore "^1.13.1"
     xmlbuilder "^10.0.0"
 
-markdown-to-jsx@^7.7.2:
-  version "7.7.17"
-  resolved "https://registry.npmjs.org/markdown-to-jsx/-/markdown-to-jsx-7.7.17.tgz"
-  integrity sha512-7mG/1feQ0TX5I7YyMZVDgCC/y2I3CiEhIRQIhyov9nGBP5eoVrOXXHuL5ZP8GRfxVZKRiXWJgwXkb9It+nQZfQ==
+markdown-to-jsx@^9.9.0:
+  version "9.9.0"
+  resolved "https://registry.yarnpkg.com/markdown-to-jsx/-/markdown-to-jsx-9.9.0.tgz#3aa13733235d7e7d897810a86dcf2319d911f1f1"
+  integrity sha512-3YRQuriODgdMr9EeY//Ya/104p978bY0nOwmc85IGxHixqOlhNDgq7IJTsLOdmFxjMFKJ6bVzUav30wWVJZOJQ==
 
 matcher@^3.0.0:
   version "3.0.0"
@@ -5827,10 +5827,10 @@ react-syntax-highlighter@^16.1.0:
     prismjs "^1.30.0"
     refractor "^5.0.0"
 
-react-text-to-speech@^0.14.5:
-  version "0.14.9"
-  resolved "https://registry.npmjs.org/react-text-to-speech/-/react-text-to-speech-0.14.9.tgz"
-  integrity sha512-RzVCPdHoJKQAR7akRC1IA+RbjZCoHV//gpru6zg4rcxXZi6/7JAJQSqF+/Z56dAdDKYQDLOei2uQtLiErEalGg==
+react-text-to-speech@^5.1.10:
+  version "5.1.10"
+  resolved "https://registry.yarnpkg.com/react-text-to-speech/-/react-text-to-speech-5.1.10.tgz#ef3bd5c311985d1777439d50f45ba568e62123cb"
+  integrity sha512-6uLQi6NWjjDPO0YW6fImracMrrCqbzBN0U9dpek8w3lrBdRJVez/PRN87KDqnPaFMBwxN3Char2z22P8NDr5ig==
 
 react-textarea-autosize@^8.5.3:
   version "8.5.9"
@@ -6279,10 +6279,10 @@ simple-get@^4.0.0:
     once "^1.3.1"
     simple-concat "^1.0.0"
 
-sonner@^1.4.41:
-  version "1.7.4"
-  resolved "https://registry.npmjs.org/sonner/-/sonner-1.7.4.tgz"
-  integrity sha512-DIS8z4PfJRbIyfVFDVnK9rO3eYDtse4Omcm6bt0oEr5/jtLgysmjuBl1frJ9E/EQZrFmKx2A8m/s5s9CRXIzhw==
+sonner@^2.0.7:
+  version "2.0.7"
+  resolved "https://registry.yarnpkg.com/sonner/-/sonner-2.0.7.tgz#810c1487a67ec3370126e0f400dfb9edddc3e4f6"
+  integrity sha512-W6ZN4p58k8aDKA4XPcx2hpIQXBRAgyiWVkYhT7CvK6D3iAu7xjvVyhQHg2/iaKJZ1XVJ4r7XuwGL+WGEK37i9w==
 
 source-map-js@^1.2.1:
   version "1.2.1"
