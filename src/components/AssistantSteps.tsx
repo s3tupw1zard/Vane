@@ -58,7 +58,7 @@ const AssistantSteps = ({
   isLast,
 }: {
   block: ResearchBlock;
-  status: 'answering' | 'completed' | 'error';
+  status: 'answering' | 'completed' | 'error' | 'cancelled';
   isLast: boolean;
 }) => {
   const [isExpanded, setIsExpanded] = useState(
@@ -71,8 +71,10 @@ const AssistantSteps = ({
       setIsExpanded(false);
     } else if (status === 'answering' && isLast) {
       setIsExpanded(true);
+    } else if (status === 'cancelled' && isLast) {
+      setIsExpanded(false);
     }
-  }, [researchEnded, status]);
+  }, [researchEnded, status, isLast]);
 
   if (!block) return null;
 

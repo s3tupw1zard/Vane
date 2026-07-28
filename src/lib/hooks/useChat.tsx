@@ -56,6 +56,7 @@ type ChatContext = {
     messageId?: string,
     rewrite?: boolean,
   ) => Promise<void>;
+  cancelGeneration: () => void;
   rewrite: (messageId: string) => void;
   setChatModelProvider: (provider: ChatModelProvider) => void;
   setEmbeddingModelProvider: (provider: EmbeddingModelProvider) => void;
@@ -256,6 +257,7 @@ export const chatContext = createContext<ChatContext>({
   chatModelProvider: { key: '', providerId: '' },
   embeddingModelProvider: { key: '', providerId: '' },
   researchEnded: false,
+  cancelGeneration: () => {},
   rewrite: () => {},
   sendMessage: async () => {},
   setFileIds: () => {},
@@ -312,6 +314,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const [isReady, setIsReady] = useState(false);
 
   const messagesRef = useRef<Message[]>([]);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const sections = useMemo<Section[]>(() => {
     return messages.map((msg) => {
@@ -758,6 +761,8 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
     setMessages((prevMessages) => [...prevMessages, newMessage]);
 
+    abortControllerRef.current = new AbortController();
+
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: {
@@ -785,6 +790,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         },
         systemInstructions: localStorage.getItem('systemInstructions'),
       }),
+      signal: abortControllerRef.current.signal,
     });
 
     if (!res.body) throw new Error('No response body');
@@ -796,26 +802,49 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
     const messageHandler = getMessageHandler(newMessage);
 
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
 
-      partialChunk += decoder.decode(value, { stream: true });
+        partialChunk += decoder.decode(value, { stream: true });
 
-      const lines = partialChunk.split('\n');
-      // All lines except the last are complete (server terminates each message with \n)
-      // The last element may be an incomplete line — keep it for the next chunk
-      partialChunk = lines[lines.length - 1];
+        const lines = partialChunk.split('\n');
+        // All lines except the last are complete (server terminates each message with \n)
+        // The last element may be an incomplete line — keep it for the next chunk
+        partialChunk = lines[lines.length - 1];
 
-      for (const line of lines.slice(0, -1)) {
-        if (!line.trim()) continue;
-        try {
-          const json = JSON.parse(line);
-          messageHandler(json);
-        } catch (error) {
-          console.warn('Failed to parse SSE line, skipping:', line);
+        for (const line of lines.slice(0, -1)) {
+          if (!line.trim()) continue;
+          try {
+            const json = JSON.parse(line);
+            messageHandler(json);
+          } catch (error) {
+            console.warn('Failed to parse SSE line, skipping:', line);
+          }
         }
       }
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.messageId === messageId
+              ? { ...msg, status: 'cancelled' as const }
+              : msg,
+          ),
+        );
+        setLoading(false);
+      } else {
+        throw error;
+      }
+    } finally {
+      abortControllerRef.current = null;
+    }
+  };
+
+  const cancelGeneration = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
   };
 
@@ -842,6 +871,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         setOptimizationMode,
         rewrite,
         sendMessage,
+        cancelGeneration,
         setChatModelProvider,
         chatModelProvider,
         embeddingModelProvider,
