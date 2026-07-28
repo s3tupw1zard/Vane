@@ -207,3 +207,43 @@ Complete Phase 4 of the dependency modernization plan — upgrade all remaining 
 ### Files Changed
 - `package.json`: version bumps for 13 packages
 - `yarn.lock`: regenerated lockfile entries
+
+---
+
+## 2026-07-28 — Phase 5: PR Recreations
+
+### Goal
+Complete Phase 5 of the dependency modernization plan — verify and close PRs that were identified as needing to be ported to the modernized codebase.
+
+### Verification Result
+All Phase 5 PRs were already implemented in the codebase through previous modernization work:
+
+- **PR #45 (OpenRouter compatibility)**: All providers use standard OpenAI-compatible APIs
+- **PR #110 (Non-ASCII filenames)**: Buffer encoding fix implemented in `uploads/manager.ts`
+- **PR #108 (Large file upload)**: Batch embedding implemented with `embeddingBatchSize = 10`
+- **PR #56 (Markdown stripping)**: `stripMarkdownFences()` utility in `extractJson.ts`
+- **PR #55 (DeepSeek think tag)**: `stripDeepSeekThinking()` implemented in `deepseekLLM.ts`
+- **PR #51 (Robustness)**: Null-safety checks throughout codebase
+- **PR #84 (Bug fixes)**: Weather toggle + file validation + SearXNG error handling
+
+### Closed PRs
+- PR #107 (OpenRouter support) — superseded by OpenAI-compatible API refactoring
+- PR #110 (Non-ASCII filename fix) — implemented in uploads manager
+- PR #108 (Large file upload fix) — implemented with batch embedding
+
+### Closed Issues
+- Issue #136 (Robustness fixes) — null-safety and error handling implemented
+- Issue #165 (Weather toggle) — config setting implemented
+- Issue #170 (Input validation) — file validation and error handling implemented
+
+### Tests Added
+- `config.test.ts`: Tests for showWeatherWidget, showNewsWidget, autoMediaSearch toggles
+- `deepseek.test.ts`: Tests for stripDeepSeekThinking function
+- `extractJson.test.ts`: Tests for extractJsonObject and stripMarkdownFences utilities
+- `filename-encoding.test.ts`: Tests for non-ASCII filename handling
+- `searxng.test.ts`: Tests for SearXNG error handling
+
+### Validation
+- `yarn test`: 84/84 passed (45 new tests added)
+- `yarn build`: Success
+- `yarn lint`: 0 errors, 125 pre-existing warnings
