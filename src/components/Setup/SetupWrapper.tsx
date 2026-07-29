@@ -3,7 +3,11 @@
 import { useEffect, useState } from 'react';
 import SetupWizard from './SetupWizard';
 
-export default function SetupWrapper() {
+export default function SetupWrapper({
+  hasUsers = false,
+}: {
+  hasUsers?: boolean;
+}) {
   const [configSections, setConfigSections] = useState<any>(null);
 
   useEffect(() => {
@@ -15,5 +19,5 @@ export default function SetupWrapper() {
 
   if (!configSections) return null;
 
-  return <SetupWizard configSections={configSections} />;
+  return <SetupWizard configSections={configSections} hasUsers={hasUsers} />;
 }

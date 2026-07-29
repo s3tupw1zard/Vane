@@ -7,26 +7,32 @@ import SetupConfig from './SetupConfig';
 
 const SetupWizard = ({
   configSections,
+  hasUsers,
 }: {
   configSections: UIConfigSections;
+  hasUsers: boolean;
 }) => {
-  const [showWelcome, setShowWelcome] = useState(true);
-  const [showSetup, setShowSetup] = useState(false);
-  const [setupState, setSetupState] = useState(1);
-
-  const delay = (ms: number) =>
-    new Promise((resolve) => setTimeout(resolve, ms));
+  const [showWelcome, setShowWelcome] = useState(!hasUsers);
+  const [showSetup, setShowSetup] = useState(hasUsers);
+  const [setupState, setSetupState] = useState(hasUsers ? 2 : 1);
+  const [adminExists, setAdminExists] = useState(hasUsers);
 
   useEffect(() => {
-    (async () => {
-      await delay(2500);
+    if (hasUsers) return;
+
+    const welcomeTimeout = window.setTimeout(() => {
       setShowWelcome(false);
-      await delay(600);
+    }, 2500);
+    const setupTimeout = window.setTimeout(() => {
       setShowSetup(true);
-      await delay(1500);
-      setSetupState(1); // Start with admin account creation
-    })();
-  }, []);
+      setSetupState(1);
+    }, 3100);
+
+    return () => {
+      window.clearTimeout(welcomeTimeout);
+      window.clearTimeout(setupTimeout);
+    };
+  }, [hasUsers]);
 
   return (
     <div className="bg-light-primary dark:bg-dark-primary h-screen w-screen fixed inset-0 overflow-hidden">
@@ -91,6 +97,8 @@ const SetupWizard = ({
                     configSections={configSections}
                     setupState={setupState}
                     setSetupState={setSetupState}
+                    adminExists={adminExists}
+                    onAdminCreated={() => setAdminExists(true)}
                   />
                 </motion.div>
               )}
@@ -108,6 +116,8 @@ const SetupWizard = ({
                     configSections={configSections}
                     setupState={setupState}
                     setSetupState={setSetupState}
+                    adminExists={adminExists}
+                    onAdminCreated={() => setAdminExists(true)}
                   />
                 </motion.div>
               )}

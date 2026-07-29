@@ -9,6 +9,11 @@ import SetupWrapper from '@/components/Setup/SetupWrapper';
 import Sidebar from '@/components/Sidebar';
 import { ChatProvider } from '@/lib/hooks/useChat';
 
+interface SetupStatus {
+  setupComplete: boolean;
+  hasUsers: boolean;
+}
+
 export default function AuthLayout({
   children,
 }: {
@@ -16,24 +21,26 @@ export default function AuthLayout({
 }) {
   const { user, loading } = useAuth();
   const pathname = usePathname();
-  const [setupComplete, setSetupComplete] = useState<boolean | null>(null);
+  const [setupStatus, setSetupStatus] = useState<SetupStatus | null>(null);
 
   const isAuthRoute = pathname?.startsWith('/login');
   const isSetupRoute = pathname?.startsWith('/setup');
 
   useEffect(() => {
-    // Check if setup is complete
     fetch('/api/auth/setup-status')
-      .then((r) => r.json())
-      .then((d) => setSetupComplete(d.setupComplete))
+      .then((response) => {
+        if (!response.ok) throw new Error('Failed to fetch setup status');
+        return response.json();
+      })
+      .then((data) => setSetupStatus(data))
       .catch(() => {
-        // Fail closed - if we can't verify setup status, treat as incomplete
         console.error('Failed to fetch setup status');
-        setSetupComplete(false);
+        // Do not expose first-user registration when setup state is unknown.
+        setSetupStatus({ setupComplete: false, hasUsers: true });
       });
   }, []);
 
-  if (loading || setupComplete === null) {
+  if (loading || setupStatus === null) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader />
@@ -41,10 +48,11 @@ export default function AuthLayout({
     );
   }
 
-  // If setup not complete → redirect to /setup for first-time setup
-  // (must check before login redirect so first-time users see setup wizard)
-  if (!setupComplete) {
-    // Redirect to /setup if not already there
+  if (!setupStatus.setupComplete) {
+    if (setupStatus.hasUsers && !user) {
+      return <LoginPage />;
+    }
+
     if (!isSetupRoute) {
       window.location.href = '/setup';
       return (
@@ -53,7 +61,8 @@ export default function AuthLayout({
         </div>
       );
     }
-    return <SetupWrapper />;
+
+    return <SetupWrapper hasUsers={setupStatus.hasUsers} />;
   }
 
   // Not logged in → login page (unless already on login)
