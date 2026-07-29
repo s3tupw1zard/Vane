@@ -28,7 +28,13 @@ export default function RootLayout({
 }>) {
   return (
     <html className="h-full" lang="en" suppressHydrationWarning>
-      <body className={cn('h-full antialiased', montserrat.className)}>
+      <body
+        suppressHydrationWarning
+        className={cn(
+          'h-full bg-light-primary text-black antialiased dark:bg-dark-primary dark:text-white',
+          montserrat.className,
+        )}
+      >
         <ThemeProvider>
           <AuthProvider>
             <AuthLayout>{children}</AuthLayout>
