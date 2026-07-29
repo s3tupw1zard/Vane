@@ -61,22 +61,31 @@ Vane includes API documentation for programmatic access.
 
 Before diving into coding, setting up your local environment is key. Here's what you need to do:
 
-1. Run `npm install` to install all dependencies.
-2. Use `npm run dev` to start the application in development mode.
+1. Run `yarn install` to install all dependencies.
+2. Use `yarn dev` to start the application in development mode.
 3. Open http://localhost:3000 and complete the setup in the UI (API keys, models, search backend URL, etc.).
 
 Database migrations are applied automatically on startup.
 
 For full installation options (Docker and non Docker), see the installation guide in the repository README.
 
-**Please note**: Docker configurations are present for setting up production environments, whereas `npm run dev` is used for development purposes.
+**Please note**: Docker configurations are present for setting up production environments, whereas `yarn dev` is used for development purposes.
 
 ## Coding and Contribution Practices
 
 Before committing changes:
 
 1. Ensure that your code functions correctly by thorough testing.
-2. Always run `npm run format:write` to format your code according to the project's coding standards. This helps maintain consistency and code quality.
-3. We currently do not have a code of conduct, but it is in the works. In the meantime, please be mindful of how you engage with the project and its community.
+2. Run the validation commands:
+   ```bash
+   yarn build       # Build the project
+   yarn typecheck   # TypeScript type checking
+   yarn lint        # Lint the codebase
+   yarn test        # Run tests
+   ```
+3. Format your code: `yarn format:write`
+4. We currently do not have a code of conduct, but it is in the works. In the meantime, please be mindful of how you engage with the project and its community.
+
+## Internal Documentation
 
 Following these steps will help maintain the integrity of Vane's codebase and facilitate a smoother integration of your valuable contributions. Thank you for your support and commitment to improving Vane.
