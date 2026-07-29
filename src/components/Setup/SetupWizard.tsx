@@ -43,9 +43,9 @@ const SetupWizard = ({
                 transition={{ duration: 0.6 }}
                 initial={{ opacity: 0, translateY: '30px' }}
                 animate={{ opacity: 1, translateY: '0px' }}
-                className="text-4xl md:text-6xl xl:text-8xl font-normal font-['Instrument_Serif'] tracking-tight"
+                className="text-black/90 dark:text-white/90 text-4xl md:text-6xl xl:text-8xl font-normal font-['Instrument_Serif'] tracking-tight"
               >
-                Welcome to
+                Welcome to{' '}
                 <span className="text-[#24A0ED] italic font-['PP_Editorial']">
                   Vane
                 </span>
