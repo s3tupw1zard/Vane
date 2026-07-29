@@ -11,16 +11,22 @@ import AddProvider from '../Settings/Sections/Models/AddProviderDialog';
 import ModelProvider from '../Settings/Sections/Models/ModelProvider';
 import ModelSelect from '@/components/Settings/Sections/Models/ModelSelect';
 import Loader from '@/components/ui/Loader';
+import { useAuth } from '@/lib/hooks/useAuth';
 
 const SetupConfig = ({
   configSections,
   setupState,
   setSetupState,
+  adminExists,
+  onAdminCreated,
 }: {
   configSections: UIConfigSections;
   setupState: number;
   setSetupState: (state: number) => void;
+  adminExists: boolean;
+  onAdminCreated: () => void;
 }) => {
+  const { login } = useAuth();
   const [providers, setProviders] = useState<ConfigModelProvider[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFinishing, setIsFinishing] = useState(false);
@@ -86,22 +92,14 @@ const SetupConfig = ({
         return;
       }
 
-      // Auto-login after creating admin
-      const loginRes = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: adminUsername,
-          password: adminPassword,
-        }),
-      });
+      const loginResult = await login(adminUsername, adminPassword);
 
-      if (!loginRes.ok) {
-        setAdminError('Admin created but auto-login failed. Please log in manually.');
-        setSetupState(2);
+      if (!loginResult.success) {
+        window.location.href = '/login';
         return;
       }
 
+      onAdminCreated();
       setSetupState(2);
     } catch {
       setAdminError('Network error. Please try again.');
@@ -139,7 +137,11 @@ const SetupConfig = ({
       {setupState === 1 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0, transition: { duration: 0.5, delay: 0.1 } }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            transition: { duration: 0.5, delay: 0.1 },
+          }}
           className="w-full h-[calc(95vh-80px)] bg-light-primary dark:bg-dark-primary border border-light-200 dark:border-dark-200 rounded-xl shadow-sm flex flex-col overflow-hidden"
         >
           <div className="flex-1 overflow-y-auto px-3 sm:px-4 md:px-6 py-4 md:py-6">
@@ -152,7 +154,10 @@ const SetupConfig = ({
               </p>
             </div>
 
-            <form onSubmit={handleCreateAdmin} className="space-y-4 max-w-sm mx-auto">
+            <form
+              onSubmit={handleCreateAdmin}
+              className="space-y-4 max-w-sm mx-auto"
+            >
               <div>
                 <label className="block text-xs font-medium text-black/60 dark:text-white/60 mb-1.5">
                   Admin Username
@@ -205,7 +210,11 @@ const SetupConfig = ({
                 disabled={adminCreating}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#24A0ED] text-white hover:bg-[#1e8fd1] active:scale-[0.98] transition-all duration-200 font-medium text-sm disabled:opacity-60"
               >
-                {adminCreating ? <Loader size="sm" /> : 'Create Account & Continue'}
+                {adminCreating ? (
+                  <Loader size="sm" />
+                ) : (
+                  'Create Account & Continue'
+                )}
                 {!adminCreating && <ArrowRight className="w-4 h-4" />}
               </button>
             </form>
@@ -273,14 +282,18 @@ const SetupConfig = ({
             </div>
           </div>
 
-          <div className="flex items-center justify-between px-3 sm:px-4 md:px-6 py-3 border-t border-light-200 dark:border-dark-200">
-            <button
-              onClick={() => setSetupState(1)}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back
-            </button>
+          <div
+            className={`flex items-center ${adminExists ? 'justify-end' : 'justify-between'} px-3 sm:px-4 md:px-6 py-3 border-t border-light-200 dark:border-dark-200`}
+          >
+            {!adminExists && (
+              <button
+                onClick={() => setSetupState(1)}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </button>
+            )}
             <button
               onClick={() => setSetupState(3)}
               disabled={!hasProviders || isLoading}
