@@ -1,7 +1,5 @@
 import { UIConfigField, ConfigModelProvider } from '@/lib/config/types';
-import { cn } from '@/lib/utils';
-import { AnimatePresence, motion } from 'framer-motion';
-import { AlertCircle, Plug2, Plus, Pencil, Trash2, X } from 'lucide-react';
+import { AlertCircle, Plug2, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import AddModel from './AddModelDialog';
@@ -17,7 +15,7 @@ const ModelProvider = ({
   fields: UIConfigField[];
   setProviders: React.Dispatch<React.SetStateAction<ConfigModelProvider[]>>;
 }) => {
-  const [open, setOpen] = useState(true);
+  const [_open, _setOpen] = useState(true);
 
   const handleModelDelete = async (
     type: 'chat' | 'embedding',

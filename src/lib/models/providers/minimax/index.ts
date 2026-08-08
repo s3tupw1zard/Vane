@@ -117,7 +117,7 @@ class MiniMaxProvider extends BaseModelProvider<MiniMaxConfig> {
     return new MiniMaxLLM(config);
   }
 
-  async loadEmbeddingModel(key: string): Promise<BaseEmbedding<any>> {
+  async loadEmbeddingModel(_key: string): Promise<BaseEmbedding<any>> {
     throw new Error('MiniMax provider does not support embedding models.');
   }
 

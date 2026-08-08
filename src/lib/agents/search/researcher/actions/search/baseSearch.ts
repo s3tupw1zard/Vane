@@ -94,7 +94,7 @@ export const executeSearch = async (input: {
             .sort((a, b) => b.metadata.similarity - a.metadata.similarity)
             .slice(0, 10);
         }
-      } catch (err) {
+      } catch (_err) {
         resultChunks = res.results.map((r) => ({
           content: r.content || r.title,
           metadata: {
@@ -208,7 +208,7 @@ export const executeSearch = async (input: {
             .sort((a, b) => b.metadata.similarity - a.metadata.similarity)
             .slice(0, 10);
         }
-      } catch (err) {
+      } catch (_err) {
         resultChunks = res.results.map((r) => ({
           content: r.content || r.title,
           metadata: {

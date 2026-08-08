@@ -1,5 +1,4 @@
 import { Check, ClipboardList } from 'lucide-react';
-import { Message } from '../ChatWindow';
 import { useState } from 'react';
 import { Section } from '@/lib/hooks/useChat';
 import { SourceBlock } from '@/lib/types';

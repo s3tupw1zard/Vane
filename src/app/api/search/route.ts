@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import ModelRegistry from '@/lib/models/registry';
 import { ModelWithProvider } from '@/lib/models/types';
 import SessionManager from '@/lib/session';
@@ -91,7 +91,7 @@ export const POST = async (req: NextRequest) => {
                 } else if (data.type === 'searchResults') {
                   sources = data.data;
                 }
-              } catch (error) {
+              } catch (_error) {
                 reject(Response.json({ message: 'Error parsing data' }, { status: 500 }));
               }
             }
@@ -120,7 +120,7 @@ export const POST = async (req: NextRequest) => {
 
         signal.addEventListener('abort', () => {
           session.removeAllListeners();
-          try { controller.close(); } catch (error) {}
+          try { controller.close(); } catch (_error) {}
         });
 
         session.subscribe((event: string, data: Record<string, any>) => {

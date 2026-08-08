@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getUserByUsername, verifyPassword, createSession, hashPassword } from '@/lib/auth';
+import { getUserByUsername, verifyPassword, createSession } from '@/lib/auth';
 import { SESSION_EXPIRY_MS } from '@/lib/auth';
 
 // Hardcoded dummy hash to equalize response time when user not found

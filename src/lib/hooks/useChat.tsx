@@ -465,7 +465,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
               try {
                 const json = JSON.parse(line);
                 messageHandler(json);
-              } catch (error) {
+              } catch (_error) {
                 console.warn('Failed to parse SSE line, skipping:', line);
               }
             }
@@ -484,7 +484,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       setIsConfigReady,
       setHasError,
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   useEffect(() => {
@@ -522,7 +522,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       setIsMessagesLoaded(true);
       setChatId(crypto.randomBytes(20).toString('hex'));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [chatId, isMessagesLoaded, newChatCreated, messages.length]);
 
   useEffect(() => {
@@ -735,7 +735,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const sendMessage: ChatContext['sendMessage'] = async (
     message,
     messageId,
-    rewrite = false,
+    _rewrite = false,
   ) => {
     if (loading || !message) return;
     setLoading(true);
@@ -819,7 +819,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
           try {
             const json = JSON.parse(line);
             messageHandler(json);
-          } catch (error) {
+          } catch (_error) {
             console.warn('Failed to parse SSE line, skipping:', line);
           }
         }

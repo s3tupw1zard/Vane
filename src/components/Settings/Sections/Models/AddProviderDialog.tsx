@@ -1,8 +1,6 @@
 import {
-  Description,
   Dialog,
   DialogPanel,
-  DialogTitle,
 } from '@headlessui/react';
 import { Loader2, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';

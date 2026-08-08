@@ -161,7 +161,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
       stream: true,
     });
 
-    let recievedToolCalls: { name: string; id: string; arguments: string }[] =
+    const recievedToolCalls: { name: string; id: string; arguments: string }[] =
       [];
 
     const parseToolArguments = (argumentsText: string) => {
@@ -169,7 +169,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
 
       try {
         return parse(argumentsText);
-      } catch (err) {
+      } catch (_err) {
         // Some OpenAI-compatible providers stream an empty or partial arguments
         // chunk before the full JSON arrives. Keep streaming instead of failing.
         return {};

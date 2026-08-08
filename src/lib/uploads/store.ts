@@ -60,7 +60,7 @@ class UploadStore {
         const hashResults: string[][] = []
 
         await Promise.all(queryEmbeddings.map(async (query) => {
-            const similarities = this.records.map((record, idx) => {
+            const similarities = this.records.map((record, _idx) => {
                 return {
                     chunk: {
                         content: record.content,

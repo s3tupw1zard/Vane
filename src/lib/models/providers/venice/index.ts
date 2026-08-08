@@ -85,7 +85,7 @@ class VeniceProvider extends BaseModelProvider<VeniceConfig> {
     });
   }
 
-  async loadEmbeddingModel(key: string): Promise<BaseEmbedding<any>> {
+  async loadEmbeddingModel(_key: string): Promise<BaseEmbedding<any>> {
     throw new Error('Venice.ai Provider does not support embedding models.');
   }
 

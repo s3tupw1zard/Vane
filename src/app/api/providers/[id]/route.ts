@@ -1,5 +1,5 @@
 import ModelRegistry from '@/lib/models/registry';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { requireAdmin } from '@/lib/middleware';
 
 export const DELETE = async (

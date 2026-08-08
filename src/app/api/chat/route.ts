@@ -165,6 +165,7 @@ export const POST = async (req: Request) => {
     const encoder = new TextEncoder();
     const keepAliveMs = 15_000;
     let streamClosed = false;
+    // eslint-disable-next-line prefer-const
     let keepAliveInterval: ReturnType<typeof setInterval> | undefined;
 
     const safeWrite = (payload: Record<string, unknown>) => {

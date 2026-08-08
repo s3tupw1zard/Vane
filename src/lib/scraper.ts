@@ -4,7 +4,7 @@ import { Mutex } from 'async-mutex';
 import { truncateTextByTokens } from '@/lib/utils/splitText';
 
 function isBlockedIPv4(ip: string): boolean {
-  const [a, b, c, d] = ip.split('.').map(Number);
+  const [a, b, _c, _d] = ip.split('.').map(Number);
   return (
     (a === 10) ||
     (a === 172 && b >= 16 && b <= 31) ||

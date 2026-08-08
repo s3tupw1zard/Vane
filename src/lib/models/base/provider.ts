@@ -19,7 +19,7 @@ abstract class BaseModelProvider<CONFIG> {
   static getProviderMetadata(): ProviderMetadata {
     throw new Error('Method not Implemented.');
   }
-  static parseAndValidate(raw: any): any {
+  static parseAndValidate(_raw: any): any {
     /* Static methods can't access class type parameters */
     throw new Error('Method not Implemented.');
   }

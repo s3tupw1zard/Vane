@@ -1,4 +1,3 @@
-import BaseEmbedding from '@/lib/models/base/embedding';
 import UploadStore from '@/lib/uploads/store';
 
 const getSpeedPrompt = (

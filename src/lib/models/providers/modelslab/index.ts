@@ -85,7 +85,7 @@ class ModelsLabProvider extends BaseModelProvider<ModelsLabConfig> {
     });
   }
 
-  async loadEmbeddingModel(key: string): Promise<BaseEmbedding<any>> {
+  async loadEmbeddingModel(_key: string): Promise<BaseEmbedding<any>> {
     throw new Error('ModelsLab Provider does not support embedding models.');
   }
 

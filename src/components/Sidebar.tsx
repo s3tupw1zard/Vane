@@ -5,7 +5,6 @@ import {
   BookOpenText,
   Home,
   Search,
-  Settings,
   Plus,
   LogOut,
 } from 'lucide-react';
@@ -23,7 +22,7 @@ const VerticalIconContainer = ({ children }: { children: ReactNode }) => {
 
 const Sidebar = ({ children }: { children: React.ReactNode }) => {
   const segments = useSelectedLayoutSegments();
-  const [isOpen, setIsOpen] = useState<boolean>(true);
+  const [_isOpen, _setIsOpen] = useState<boolean>(true);
   const { logout } = useAuth();
 
   const navLinks = [

@@ -2,8 +2,7 @@
 
 import DeleteChat from '@/components/DeleteChat';
 import DeleteAllChats from '@/components/DeleteAllChats';
-import { formatTimeDifference } from '@/lib/utils';
-import { BookOpenText, ClockIcon, FileText, Globe2Icon } from 'lucide-react';
+import { BookOpenText, FileText, Globe2Icon } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 

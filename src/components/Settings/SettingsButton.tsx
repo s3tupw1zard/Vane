@@ -1,6 +1,6 @@
 'use client';
 
-import { Settings, LogOut, Shield } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { useState } from 'react';
 import SettingsDialogue from './SettingsDialogue';
 import { useAuth } from '@/lib/hooks/useAuth';
@@ -8,9 +8,9 @@ import { toast } from 'sonner';
 
 const SettingsButton = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user: _user, logout } = useAuth();
 
-  const handleLogout = async () => {
+  const _handleLogout = async () => {
     await logout();
     toast.success('Logged out successfully');
     window.location.href = '/';

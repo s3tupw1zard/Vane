@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import bcrypt from 'bcryptjs';
 import { SignJWT, jwtVerify } from 'jose';
 
@@ -43,7 +43,7 @@ describe('Auth Logic', () => {
 
     it('should reject plain text passwords', async () => {
       const password = 'testPassword123';
-      const hash = await bcrypt.hash(password, 12);
+      const _hash = await bcrypt.hash(password, 12);
 
       // Plain text should never match
       const isValid = await bcrypt.compare(password, 'plaintexthash');
@@ -117,7 +117,7 @@ describe('Auth Logic', () => {
         .sign(JWT_SECRET);
 
       // Tamper with the token payload (change role to admin)
-      const [header, payload, signature] = token.split('.');
+      const [header, _payload, signature] = token.split('.');
       const tamperedPayload = Buffer.from(JSON.stringify({
         sub: 'user-123',
         role: 'admin', // Tampered!
