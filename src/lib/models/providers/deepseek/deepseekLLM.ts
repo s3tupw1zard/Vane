@@ -1,12 +1,10 @@
 import OpenAI from 'openai';
 import BaseLLM from '../../base/llm';
-import { zodTextFormat, zodResponseFormat } from 'openai/helpers/zod';
 import {
   GenerateObjectInput,
   GenerateTextInput,
   GenerateTextOutput,
   StreamTextOutput,
-  ToolCall,
 } from '../../types';
 import { parse } from 'partial-json';
 import z from 'zod';
@@ -161,7 +159,7 @@ class DeepSeekLLM extends BaseLLM<DeepSeekConfig> {
       stream: true,
     });
 
-    let recievedToolCalls: { name: string; id: string; arguments: string }[] =
+    const recievedToolCalls: { name: string; id: string; arguments: string }[] =
       [];
     let pendingContent = '';
     let foundThinkEndTag = false;

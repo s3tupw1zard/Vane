@@ -52,7 +52,7 @@ const WeatherWidget = () => {
         });
       } else if (result.state === 'prompt') {
         callback(await getApproxLocation());
-        navigator.geolocation.getCurrentPosition((position) => {});
+        navigator.geolocation.getCurrentPosition((_position) => {});
       } else if (result.state === 'denied') {
         callback(await getApproxLocation());
       }

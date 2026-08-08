@@ -3,18 +3,15 @@ import {
   Popover,
   PopoverButton,
   PopoverPanel,
-  Transition,
 } from '@headlessui/react';
 import {
-  CopyPlus,
   File,
-  Link,
   LoaderCircle,
   Paperclip,
   Plus,
   Trash,
 } from 'lucide-react';
-import { Fragment, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useChat } from '@/lib/hooks/useChat';
 import { AnimatePresence } from 'motion/react';
 import { motion } from 'framer-motion';

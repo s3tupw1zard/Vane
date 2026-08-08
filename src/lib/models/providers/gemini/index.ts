@@ -42,8 +42,8 @@ class GeminiProvider extends BaseModelProvider<GeminiConfig> {
 
     const data = await res.json();
 
-    let defaultEmbeddingModels: Model[] = [];
-    let defaultChatModels: Model[] = [];
+    const defaultEmbeddingModels: Model[] = [];
+    const defaultChatModels: Model[] = [];
 
     data.models.forEach((m: any) => {
       if (

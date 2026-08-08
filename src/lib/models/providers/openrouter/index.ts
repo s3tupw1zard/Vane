@@ -83,7 +83,7 @@ class OpenRouterProvider extends BaseModelProvider<OpenRouterConfig> {
     });
   }
 
-  async loadEmbeddingModel(key: string): Promise<BaseEmbedding<any>> {
+  async loadEmbeddingModel(_key: string): Promise<BaseEmbedding<any>> {
     throw new Error('OpenRouter Provider does not support embedding models.');
   }
 

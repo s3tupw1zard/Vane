@@ -1,6 +1,6 @@
 'use client';
 
-/* eslint-disable @next/next/no-img-element */
+ 
 import React, { MutableRefObject, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import {
@@ -79,7 +79,7 @@ const ThinkTagProcessor = ({
 
 const MessageBox = ({
   section,
-  sectionIndex,
+  sectionIndex: _sectionIndex,
   dividerRef,
   isLast,
 }: {
@@ -92,7 +92,7 @@ const MessageBox = ({
     loading,
     sendMessage,
     rewrite,
-    messages,
+    messages: _messages,
     researchEnded,
     chatHistory,
   } = useChat();

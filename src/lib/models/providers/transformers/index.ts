@@ -50,7 +50,7 @@ class TransformersProvider extends BaseModelProvider<TransformersConfig> {
     };
   }
 
-  async loadChatModel(key: string): Promise<BaseLLM<any>> {
+  async loadChatModel(_key: string): Promise<BaseLLM<any>> {
     throw new Error('Transformers Provider does not support chat models.');
   }
 
@@ -69,7 +69,7 @@ class TransformersProvider extends BaseModelProvider<TransformersConfig> {
     });
   }
 
-  static parseAndValidate(raw: any): TransformersConfig {
+  static parseAndValidate(_raw: any): TransformersConfig {
     return {};
   }
 

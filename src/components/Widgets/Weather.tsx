@@ -224,7 +224,7 @@ const Weather = ({
   location,
   current,
   daily,
-  timezone,
+  timezone: _timezone,
 }: WeatherWidgetProps) => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const unit = getMeasurementUnit();

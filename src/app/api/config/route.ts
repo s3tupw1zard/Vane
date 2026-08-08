@@ -38,7 +38,7 @@ function isPrivateOrMetadataUrl(url: string): boolean {
 
 const URL_CONFIG_KEYS = ['search.searxngURL'];
 
-export const GET = async (req: NextRequest) => {
+export const GET = async (_req: NextRequest) => {
   try {
     const values = configManager.getCurrentConfig();
     const fields = configManager.getUIConfigSections();

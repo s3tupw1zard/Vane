@@ -2,7 +2,7 @@ import ModelRegistry from '@/lib/models/registry';
 import { NextRequest } from 'next/server';
 import { requireAdmin } from '@/lib/middleware';
 
-export const GET = async (req: Request) => {
+export const GET = async (_req: Request) => {
   try {
     const registry = new ModelRegistry();
 

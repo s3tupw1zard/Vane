@@ -8,7 +8,6 @@ import { useChat } from '@/lib/hooks/useChat';
 const MessageInput = () => {
   const { loading, sendMessage } = useChat();
 
-  const [copilotEnabled, setCopilotEnabled] = useState(false);
   const [message, setMessage] = useState('');
   const [textareaRows, setTextareaRows] = useState(1);
   const [mode, setMode] = useState<'multi' | 'single'>('single');

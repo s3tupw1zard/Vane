@@ -14,7 +14,13 @@ const config = [
 			"react-hooks/rules-of-hooks": "error",
 			"react-hooks/exhaustive-deps": "warn",
 			"@typescript-eslint/no-explicit-any": "off",
-			"@typescript-eslint/no-unused-vars": "warn",
+			"@typescript-eslint/no-unused-vars": ["warn", {
+				"args": "after-used",
+				"ignoreRestSiblings": true,
+				"argsIgnorePattern": "^_",
+				"varsIgnorePattern": "^_",
+				"caughtErrorsIgnorePattern": "^_"
+			}],
 			"@typescript-eslint/no-require-imports": "off",
 			"@typescript-eslint/no-empty-object-type": "off",
 			"@typescript-eslint/no-unused-expressions": "off",

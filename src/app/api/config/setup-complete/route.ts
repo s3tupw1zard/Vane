@@ -1,7 +1,7 @@
 import configManager from '@/lib/config';
 import { NextRequest } from 'next/server';
 
-export const POST = async (req: NextRequest) => {
+export const POST = async (_req: NextRequest) => {
   try {
     configManager.markSetupComplete();
 

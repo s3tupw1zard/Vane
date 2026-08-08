@@ -12,7 +12,7 @@ export const GET = async (req: NextRequest) => {
     if (!auth.success) return auth.error;
 
     // Debug: try a simple query without userId filter
-    let allChats = await db.select().from(chats);
+    const allChats = await db.select().from(chats);
     console.log('All chats:', allChats.length);
 
     // Now try with userId filter
@@ -30,7 +30,7 @@ export const GET = async (req: NextRequest) => {
   }
 };
 
-export const DELETE = async (req: Request) => {
+export const DELETE = async (_req: Request) => {
   try {
     await db.delete(messages);
     await db.delete(chats);

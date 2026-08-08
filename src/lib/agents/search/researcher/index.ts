@@ -11,8 +11,8 @@ class Researcher {
     session: SessionManager,
     input: ResearcherInput,
   ): Promise<ResearcherOutput> {
-    let actionOutput: ActionOutput[] = [];
-    let maxIteration =
+    const actionOutput: ActionOutput[] = [];
+    const maxIteration =
       input.config.mode === 'speed'
         ? 2
         : input.config.mode === 'balanced'
@@ -79,9 +79,9 @@ class Researcher {
       const block = session.getBlock(researchBlockId);
 
       let reasoningEmitted = false;
-      let reasoningId = crypto.randomUUID();
+      const reasoningId = crypto.randomUUID();
 
-      let finalToolCalls: ToolCall[] = [];
+      const finalToolCalls: ToolCall[] = [];
 
       for await (const partialRes of actionStream) {
         if (partialRes.toolCallChunk.length > 0) {

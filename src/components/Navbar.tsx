@@ -1,5 +1,4 @@
-import { Clock, Edit, Share, Trash, FileText, FileDown } from 'lucide-react';
-import { Message } from './ChatWindow';
+import { Clock, Edit, Share, FileText, FileDown } from 'lucide-react';
 import { useEffect, useState, Fragment } from 'react';
 import { formatTimeDifference } from '@/lib/utils';
 import DeleteChat from './DeleteChat';
@@ -35,7 +34,7 @@ const exportAsMarkdown = (sections: Section[], title: string) => {
   let md = `# 💬 Chat Export: ${title}\n\n`;
   md += `*Exported on: ${date}*\n\n---\n`;
 
-  sections.forEach((section, idx) => {
+  sections.forEach((section, _idx) => {
     md += `\n---\n`;
     md += `**🧑 User**  
 `;
@@ -102,7 +101,7 @@ const exportAsPDF = async (sections: Section[], title: string) => {
   y += 6;
   doc.setTextColor(30);
 
-  sections.forEach((section, idx) => {
+  sections.forEach((section, _idx) => {
     if (y > pageHeight - 30) {
       doc.addPage();
       y = 15;

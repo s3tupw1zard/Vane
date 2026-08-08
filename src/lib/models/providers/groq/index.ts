@@ -83,7 +83,7 @@ class GroqProvider extends BaseModelProvider<GroqConfig> {
     });
   }
 
-  async loadEmbeddingModel(key: string): Promise<BaseEmbedding<any>> {
+  async loadEmbeddingModel(_key: string): Promise<BaseEmbedding<any>> {
     throw new Error('Groq Provider does not support embedding models.');
   }
 

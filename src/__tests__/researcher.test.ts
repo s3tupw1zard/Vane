@@ -42,11 +42,11 @@ class CapturingLLM extends BaseLLM<undefined> {
     };
   }
 
-  async generateObject<T>(): Promise<never> {
+  async generateObject<_T>(): Promise<never> {
     throw new Error('generateObject should not be called');
   }
 
-  async *streamObject<T>(): AsyncGenerator<never> {
+  async *streamObject<_T>(): AsyncGenerator<never> {
     throw new Error('streamObject should not be called');
   }
 }

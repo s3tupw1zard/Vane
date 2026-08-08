@@ -7,14 +7,10 @@ import {
   GenerateTextOutput,
   StreamTextOutput,
 } from '../../types';
-import { parse } from 'partial-json';
-import z from 'zod';
 import {
   ChatCompletionMessageParam,
-  ChatCompletionTool,
 } from 'openai/resources/index.mjs';
 import { Message } from '@/lib/types';
-import { extractJsonObject } from '@/lib/utils/extractJson';
 import { repairJson } from '@toolsycc/json-repair';
 
 type AzureOpenAIConfig = {
